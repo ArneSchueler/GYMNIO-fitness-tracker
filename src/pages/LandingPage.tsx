@@ -1,3 +1,3 @@
 export default function LandingPage() {
-  return <></>;
+  return <div className="p-8 text-2xl font-bold">LandingPage</div>;
 }
