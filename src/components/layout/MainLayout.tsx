@@ -16,7 +16,7 @@ export default function MainLayout({ children }) {
   return (
     <div className="flex bg-sky-900  flex-col w-full">
       <div className="flex font-bold text-lg  flex-col w-full overflow-hidden  h-screen max-h-vh">
-        <header className="bg-sky-900 text-white items-center px-20 justify-between h-27 flex w-full  ">
+        <header className="bg-sky-900 text-white items-center px-20 justify-between h-20 flex w-full  ">
           <img src={logo} alt="gymnio logo" />
           <div>
             <ButtonIcon>
@@ -79,7 +79,7 @@ export default function MainLayout({ children }) {
               </NavLink>
             </nav>
           </aside>
-          <main className="rounded-ss-sm flex-1 h-full overflow-y-auto bg-white">
+          <main className="rounded-ss-sm flex-1 h-full overflow-hidden bg-white">
             {children}
           </main>
         </div>
