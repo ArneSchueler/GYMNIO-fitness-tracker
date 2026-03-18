@@ -17,6 +17,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { cn } from "@/lib/utils";
 
 export const description = "A bar chart";
 
@@ -68,13 +69,20 @@ const widthMap = {
 
 export function ChartBarDefault({ widgetWidth }: { widgetWidth: WidgetWidth }) {
   return (
-    <Card className={widthMap[widgetWidth]}>
+    <Card
+      className={cn(
+        widthMap[widgetWidth],
+        "flex flex-col h-full overflow-hidden",
+      )}
+    >
+      {" "}
       <CardHeader>
-        <CardTitle>Bar Chart</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Weekly Workout Volume</CardTitle>
+        <CardDescription>Total: 390 minutes this week</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="aspect-[4/1]">
+      <CardContent className="flex-1 min-h-0 ">
+        {" "}
+        <ChartContainer config={chartConfig} className="h-full w-full">
           <BarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
