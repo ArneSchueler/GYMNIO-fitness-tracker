@@ -5,6 +5,7 @@ import Dashboard from "@/pages/Dashboard";
 import ExerciseLibrary from "@/pages/ExerciseLibrary";
 import RecipeCatalog from "@/pages/RecipeCatalog";
 import MainLayout from "@/components/layout/MainLayout";
+import WorkoutSession from "./pages/WorkoutSession";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <MainLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/workout" element={<WorkoutSession />} />
           <Route path="/statistics" element={<RecipeCatalog />} />
           <Route path="/exercises" element={<ExerciseLibrary />} />
           <Route path="/recipes" element={<RecipeCatalog />} />

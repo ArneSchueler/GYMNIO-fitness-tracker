@@ -79,7 +79,7 @@ export default function MainLayout({ children }) {
               </NavLink>
             </nav>
           </aside>
-          <main className="rounded-ss-sm flex-1 h-full overflow-hidden bg-white">
+          <main className="rounded-ss-sm flex-1 h-full shadow-[inset_0_-2px_10px_rgba(0,0,0,0.5)] overflow-hidden bg-white">
             {children}
           </main>
         </div>

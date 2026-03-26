@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import WidgetCard from "@/components/ui/WidgetCard";
 import { Activity, Flame, Footprints, Timer } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const username = "John";
@@ -30,7 +31,9 @@ export default function Dashboard() {
             {currentDay}, {formattedDate}
           </p>
         </div>
-        <Button size={"lg"}>Start Workout</Button>
+        <Link to="/workout">
+          <Button size={"lg"}>Start Workout</Button>
+        </Link>
       </header>
       <main className="grid lg:grid-cols-12 grid-rows-[auto_minmax(250px,1fr)_minmax(250px,1fr)] gap-4 flex-1 min-h-0">
         <section className="col-span-12 grid lg:grid-cols-12 gap-4">
