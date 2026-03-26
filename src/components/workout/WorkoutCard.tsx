@@ -13,9 +13,10 @@ import WorkoutTimer from "./WorkoutTimer";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";
 import WorkoutHeader from "./WorkoutHeader";
+import WorkoutInput from "./WorkoutInput";
 export default function WorkoutCard() {
-  const timer = true;
-  const reps = false;
+  const timer = false;
+  const reps = true;
 
   return (
     <div className="flex flex-col justify-center items-center h-full py-12">
@@ -23,7 +24,7 @@ export default function WorkoutCard() {
         <WorkoutHeader />
         <div className="flex flex-col gap-6">
           <ProgressHeader></ProgressHeader>
-          <Card className="flex flex-col gap-6 mx-auto w-full max-w-sm pt-5 px-5">
+          <Card className="flex flex-col gap-6 mx-auto w-full max-w-sm pt-5 ">
             <CardHeader className="flex flex-col w-full gap-4">
               <img
                 src="https://avatar.vercel.sh/shadcn1"
@@ -46,7 +47,7 @@ export default function WorkoutCard() {
                 </CardDescription>
               </div>
               {timer && <WorkoutTimer />}
-              {reps && <WorkoutTimer />}
+              {reps && <WorkoutInput />}
             </CardContent>
             <CardFooter className="grid  grid-cols-2 mt-5 gap-2">
               <Button variant="ghost" className="w-full">
