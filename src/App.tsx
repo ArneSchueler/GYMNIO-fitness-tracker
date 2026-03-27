@@ -6,13 +6,15 @@ import ExerciseLibrary from "@/pages/ExerciseLibrary";
 import RecipeCatalog from "@/pages/RecipeCatalog";
 import MainLayout from "@/components/layout/MainLayout";
 import WorkoutSession from "./pages/WorkoutSession";
-import Login from "./pages/Auth/Login";
+import LoginPage from "./pages/Auth/LoginPage";
+import SignupPage from "./pages/Auth/SignupPage";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/workout" element={<WorkoutSession />} />
