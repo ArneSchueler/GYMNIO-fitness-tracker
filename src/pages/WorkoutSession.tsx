@@ -1,3 +1,5 @@
+import WorkoutCard from "@/components/workout/WorkoutCard";
+
 export default function WorkoutSession() {
-  return <div className="p-8 text-2xl font-bold">WorkoutSession</div>;
+  return <WorkoutCard />;
 }

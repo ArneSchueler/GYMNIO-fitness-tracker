@@ -15,6 +15,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/workout" element={<WorkoutSession />} />
           <Route path="/statistics" element={<RecipeCatalog />} />
           <Route path="/exercises" element={<ExerciseLibrary />} />
           <Route path="/recipes" element={<RecipeCatalog />} />
