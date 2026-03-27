@@ -5,12 +5,15 @@ import Dashboard from "@/pages/Dashboard";
 import ExerciseLibrary from "@/pages/ExerciseLibrary";
 import RecipeCatalog from "@/pages/RecipeCatalog";
 import MainLayout from "@/components/layout/MainLayout";
+import WorkoutSession from "./pages/WorkoutSession";
+import Login from "./pages/Auth/Login";
 
 function App() {
   return (
     <Router>
-      <MainLayout>
-        <Routes>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/statistics" element={<RecipeCatalog />} />
           <Route path="/exercises" element={<ExerciseLibrary />} />
@@ -20,8 +23,8 @@ function App() {
           <Route path="/privacy-policy" element={<RecipeCatalog />} />
           <Route path="/terms-conditions" element={<RecipeCatalog />} />
           <Route path="/cancellation-policy" element={<RecipeCatalog />} />
-        </Routes>
-      </MainLayout>
+        </Route>
+      </Routes>
     </Router>
   );
 }

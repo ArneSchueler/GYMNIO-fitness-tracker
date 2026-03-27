@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
 import { ButtonIcon } from "../ui/button/ButtonIcon";
 import {
   ChartLine,
@@ -12,7 +13,23 @@ import {
 
 import logo from "@/assets/gymnio-logo.png";
 
-export default function MainLayout({ children }) {
+export default function MainLayout() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const primaryLinks = [
+    { to: "/", label: "Dashboard", icon: <LayoutDashboard /> },
+    { to: "/statistics", label: "Statistics", icon: <ChartLine /> },
+    { to: "/exercises", label: "Exercises", icon: <Dumbbell /> },
+    { to: "/recipes", label: "Recipes", icon: <Utensils /> },
+  ] as const;
+
+  const footerLinks = [
+    { to: "/legal-notice", label: "Legal Notice" },
+    { to: "/privacy-policy", label: "Privacy Policy" },
+    { to: "/terms-conditions", label: "Terms & Conditions" },
+    { to: "/cancellation-policy", label: "Cancellation Policy" },
+  ] as const;
+
   return (
     <div className="flex bg-sky-900  flex-col w-full">
       <div className="flex font-bold text-lg  flex-col w-full overflow-hidden  h-screen max-h-vh">
@@ -79,8 +96,8 @@ export default function MainLayout({ children }) {
               </NavLink>
             </nav>
           </aside>
-          <main className="rounded-ss-sm flex-1 h-full overflow-y-auto bg-white">
-            {children}
+          <main className="rounded-ss-sm flex-1 min-h-0 shadow-[inset_0_-2px_10px_rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden bg-white">
+            <Outlet />
           </main>
         </div>
       </div>
