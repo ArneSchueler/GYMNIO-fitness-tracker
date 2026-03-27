@@ -32,31 +32,7 @@ export function TableActions() {
       <TableBody>
         <TableRow>
           <TableCell className="font-medium">
-            <Badge variant="default">Prev</Badge>
-          </TableCell>
-          <TableCell>10</TableCell>
-          <TableCell>14</TableCell>
-          <TableCell className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8">
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Edit</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-medium">
-            <Badge variant="default">1</Badge>
+            <Badge variant="default">3</Badge>
           </TableCell>
           <TableCell>10</TableCell>
           <TableCell>14</TableCell>
@@ -104,7 +80,31 @@ export function TableActions() {
         </TableRow>
         <TableRow>
           <TableCell className="font-medium">
-            <Badge variant="default">3</Badge>
+            <Badge variant="default">1</Badge>
+          </TableCell>
+          <TableCell>10</TableCell>
+          <TableCell>14</TableCell>
+          <TableCell className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8">
+                  <MoreHorizontalIcon />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Edit</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell className="font-medium">
+            <Badge variant="default">Prev</Badge>
           </TableCell>
           <TableCell>10</TableCell>
           <TableCell>14</TableCell>

@@ -3,11 +3,13 @@ import { Badge } from "../ui/badge";
 import { InputField } from "../ui/InputField";
 import { TableActions } from "../ui/TableAction";
 import { Button } from "../ui/button";
+import TimerUI from "../ui/TimerUI";
 
 export default function WorkoutInput() {
+  const cooldown = true;
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-center gap-2">
+    <div className="flex  flex-col border p-2 rounded-xl gap-4">
+      <div className="flex  justify-center gap-2">
         <Badge variant="default">
           <p>Sets: </p>
           <p className="text-sm font-bold">3</p>
@@ -23,17 +25,20 @@ export default function WorkoutInput() {
           </div>
         </Badge>
       </div>
-      <div className="flex flex-col gap-2">
-        <div className="flex  border-1 p-2 rounded-xl gap-2">
-          <InputField label="Reps" placeholder="Reps" />
-          <InputField label="Weight (kg)" placeholder="Weight (kg)" />
+      {!cooldown && (
+        <div className="flex flex-col gap-2">
+          <div className="flex p-2 rounded-xl gap-2">
+            <InputField label="Reps" placeholder="Reps" />
+            <InputField label="Weight (kg)" placeholder="Weight (kg)" />
+          </div>
+          <Button className="w-full">
+            <Plus />
+            Add Set
+          </Button>
         </div>
-        <Button className="w-full">
-          <Plus />
-          Add Set
-        </Button>
-      </div>
-      <div className=" border-1 p-2 rounded-xl">
+      )}
+      {cooldown && <TimerUI />}
+      <div className=" ">
         <TableActions />
       </div>
     </div>

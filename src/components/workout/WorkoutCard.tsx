@@ -15,8 +15,8 @@ import ProgressHeader from "./ProgressHeader";
 import WorkoutHeader from "./WorkoutHeader";
 import WorkoutInput from "./WorkoutInput";
 export default function WorkoutCard() {
-  const timer = false;
-  const reps = true;
+  const timer = true;
+  const reps = false;
 
   return (
     <div className="flex flex-col justify-center items-center h-full py-12">
@@ -32,7 +32,7 @@ export default function WorkoutCard() {
                 className="relative rounded-2xl z-20 aspect-video w-full object-cover brightness-60 grayscale dark:brightness-40"
               />
             </CardHeader>
-            <CardContent className="flex flex-col gap-6">
+            <CardContent className="flex flex-col gap-12">
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between">
                   <CardTitle>Armkreisen</CardTitle>

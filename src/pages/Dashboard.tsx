@@ -23,10 +23,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-8 h-full gap-8 flex flex-col overflow-hidden text-2xl font-bold">
+    <div className="p-4 sm:p-6 lg:p-6 h-full gap-6 flex flex-col min-h-0 text-2xl font-bold">
       <header className="flex justify-between items-center ">
         <div>
-          <h1 className="text-5xl text-sky-900">Welcome, {username}!</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl text-sky-900">
+            Welcome, {username}!
+          </h1>
           <p className="text-lg text-gray-500">
             {currentDay}, {formattedDate}
           </p>
@@ -35,7 +37,7 @@ export default function Dashboard() {
           <Button size={"lg"}>Start Workout</Button>
         </Link>
       </header>
-      <main className="grid lg:grid-cols-12 grid-rows-[auto_minmax(250px,1fr)_minmax(250px,1fr)] gap-4 flex-1 min-h-0">
+      <main className="grid lg:grid-cols-12 grid-rows-[auto_minmax(250px,1fr)_minmax(250px,1fr)] lg:grid-rows-[auto_minmax(180px,1fr)_minmax(180px,1fr)] gap-4 flex-1 min-h-0">
         <section className="col-span-12 grid lg:grid-cols-12 gap-4">
           <WidgetCard
             icon={<Flame size={widgetIconSize} />}
