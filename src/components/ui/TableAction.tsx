@@ -30,7 +30,7 @@ export function TableActions() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow>
+        {/* <TableRow>
           <TableCell className="font-medium">
             <Badge variant="default">3</Badge>
           </TableCell>
@@ -101,7 +101,7 @@ export function TableActions() {
               </DropdownMenuContent>
             </DropdownMenu>
           </TableCell>
-        </TableRow>
+        </TableRow> */}
         <TableRow>
           <TableCell className="font-medium">
             <Badge variant="default">Prev</Badge>
