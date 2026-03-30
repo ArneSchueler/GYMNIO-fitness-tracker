@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import TimerUI from "../ui/TimerUI";
 
 export default function WorkoutInput() {
-  const cooldown = true;
+  const cooldown = false;
   return (
     <div className="flex  flex-col border p-2 rounded-xl gap-4">
       <div className="flex  justify-center gap-2">

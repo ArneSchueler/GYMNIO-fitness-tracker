@@ -15,8 +15,8 @@ import ProgressHeader from "./ProgressHeader";
 import WorkoutHeader from "./WorkoutHeader";
 import WorkoutInput from "./WorkoutInput";
 export default function WorkoutCard() {
-  const timer = true;
-  const reps = false;
+  const timer = false;
+  const reps = true;
 
   return (
     <div className="flex flex-col justify-center items-center h-full py-12">

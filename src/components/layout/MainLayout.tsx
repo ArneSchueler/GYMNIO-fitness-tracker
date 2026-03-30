@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { ButtonIcon } from "../ui/button/ButtonIcon";
-import type { ReactNode } from "react";
 import {
   ChartLine,
   Dumbbell,
