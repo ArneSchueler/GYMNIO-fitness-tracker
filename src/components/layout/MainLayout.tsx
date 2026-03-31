@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import logo from "@/assets/gymnio-logo.png";
+import DropDownMenuWithIcon from "../ui/DropDownMenuWithIcon";
 
 export default function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -75,44 +76,7 @@ export default function MainLayout() {
 
             <div className="flex items-center gap-2">
               {/* Profile dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <ButtonIcon
-                  onClick={() => setDropdownOpen((open) => !open)}
-                  aria-label="Open profile menu"
-                  aria-haspopup="true"
-                  aria-expanded={dropdownOpen}
-                >
-                  <UserRound />
-                </ButtonIcon>
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black/10 z-50 text-slate-800">
-                    <div className="py-1">
-                      <button
-                        onClick={() => {
-                          // TODO: Handle language switch action
-                          setDropdownOpen(false);
-                          alert("Language switch coming soon!");
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 flex items-center gap-2"
-                      >
-                        <Globe className="h-4 w-4" />
-                        Language
-                      </button>
-                      <button
-                        onClick={() => {
-                          // TODO: Implement logout
-                          setDropdownOpen(false);
-                          alert("You have been logged out!");
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 flex items-center gap-2"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <DropDownMenuWithIcon />
             </div>
           </div>
         </header>
@@ -208,7 +172,7 @@ export default function MainLayout() {
               </div>
 
               <div className="flex flex-col gap-8">
-                <NavLink
+                {/* <NavLink
                   to="/settings"
                   className={({ isActive }) =>
                     `flex flex-col items-center ${isActive ? "text-blue-500 " : "text-white"}`
@@ -216,7 +180,7 @@ export default function MainLayout() {
                 >
                   <Settings />
                   Settings
-                </NavLink>
+                </NavLink> */}
 
                 <div className="pt-4 border-t border-white/10">
                   <nav className="flex flex-col gap-2 text-xs font-medium text-white/60 items-center">

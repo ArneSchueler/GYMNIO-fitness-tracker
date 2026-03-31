@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 // Import der Seiten
 import Dashboard from "@/pages/Dashboard";
@@ -12,26 +12,24 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<SignupPage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/workout" element={<WorkoutSession />} />
-            <Route path="/statistics" element={<RecipeCatalog />} />
-            <Route path="/exercises" element={<ExerciseLibrary />} />
-            <Route path="/recipes" element={<RecipeCatalog />} />
-            <Route path="/settings" element={<RecipeCatalog />} />
-            <Route path="/legal-notice" element={<RecipeCatalog />} />
-            <Route path="/privacy-policy" element={<RecipeCatalog />} />
-            <Route path="/terms-conditions" element={<RecipeCatalog />} />
-            <Route path="/cancellation-policy" element={<RecipeCatalog />} />
-          </Route>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<SignupPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/workout" element={<WorkoutSession />} />
+          <Route path="/statistics" element={<RecipeCatalog />} />
+          <Route path="/exercises" element={<ExerciseLibrary />} />
+          <Route path="/recipes" element={<RecipeCatalog />} />
+          <Route path="/settings" element={<RecipeCatalog />} />
+          <Route path="/legal-notice" element={<RecipeCatalog />} />
+          <Route path="/privacy-policy" element={<RecipeCatalog />} />
+          <Route path="/terms-conditions" element={<RecipeCatalog />} />
+          <Route path="/cancellation-policy" element={<RecipeCatalog />} />
         </Route>
-      </Routes>
-    </Router>
+      </Route>
+    </Routes>
   );
 }
 
