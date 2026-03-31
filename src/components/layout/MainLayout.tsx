@@ -1,22 +1,43 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { ButtonIcon } from "../ui/button/ButtonIcon";
 import {
   ChartLine,
   Dumbbell,
-  Globe,
   LayoutDashboard,
   Menu,
   Settings,
   UserRound,
   Utensils,
   X,
+  LogOut,
+  Globe,
 } from "lucide-react";
 
 import logo from "@/assets/gymnio-logo.png";
 
 export default function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  // This requires a click event on document
+  // Basic example, can refactor to own hook
+  // Uses useRef and simple event
+  // For brevity, handle here
+  // But can be improved!
+  if (typeof window !== "undefined") {
+    window.onclick = (e: MouseEvent) => {
+      if (
+        dropdownOpen &&
+        dropdownRef.current &&
+        !(dropdownRef.current as any).contains(e.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+  }
 
   const primaryLinks = [
     { to: "/", label: "Dashboard", icon: <LayoutDashboard /> },
@@ -53,12 +74,45 @@ export default function MainLayout() {
             </div>
 
             <div className="flex items-center gap-2">
-              <ButtonIcon>
-                <Globe />
-              </ButtonIcon>
-              <ButtonIcon>
-                <UserRound />
-              </ButtonIcon>
+              {/* Profile dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <ButtonIcon
+                  onClick={() => setDropdownOpen((open) => !open)}
+                  aria-label="Open profile menu"
+                  aria-haspopup="true"
+                  aria-expanded={dropdownOpen}
+                >
+                  <UserRound />
+                </ButtonIcon>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black/10 z-50 text-slate-800">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          // TODO: Handle language switch action
+                          setDropdownOpen(false);
+                          alert("Language switch coming soon!");
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 flex items-center gap-2"
+                      >
+                        <Globe className="h-4 w-4" />
+                        Language
+                      </button>
+                      <button
+                        onClick={() => {
+                          // TODO: Implement logout
+                          setDropdownOpen(false);
+                          alert("You have been logged out!");
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-sky-50 flex items-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
