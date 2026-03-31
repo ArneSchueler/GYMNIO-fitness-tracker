@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 // Import der Seiten
 import Dashboard from "@/pages/Dashboard";
@@ -8,13 +8,14 @@ import MainLayout from "@/components/layout/MainLayout";
 import WorkoutSession from "./pages/WorkoutSession";
 import LoginPage from "./pages/Auth/LoginPage";
 import SignupPage from "./pages/Auth/SignupPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<SignupPage />} />
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<SignupPage />} />
+      <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/workout" element={<WorkoutSession />} />
@@ -27,8 +28,8 @@ function App() {
           <Route path="/terms-conditions" element={<RecipeCatalog />} />
           <Route path="/cancellation-policy" element={<RecipeCatalog />} />
         </Route>
-      </Routes>
-    </Router>
+      </Route>
+    </Routes>
   );
 }
 

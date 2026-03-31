@@ -1,22 +1,44 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { ButtonIcon } from "../ui/button/ButtonIcon";
 import {
   ChartLine,
   Dumbbell,
-  Globe,
   LayoutDashboard,
   Menu,
   Settings,
   UserRound,
   Utensils,
   X,
+  LogOut,
+  Globe,
 } from "lucide-react";
 
 import logo from "@/assets/gymnio-logo.png";
+import DropDownMenuWithIcon from "../ui/DropDownMenuWithIcon";
 
 export default function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  // This requires a click event on document
+  // Basic example, can refactor to own hook
+  // Uses useRef and simple event
+  // For brevity, handle here
+  // But can be improved!
+  if (typeof window !== "undefined") {
+    window.onclick = (e: MouseEvent) => {
+      if (
+        dropdownOpen &&
+        dropdownRef.current &&
+        !(dropdownRef.current as any).contains(e.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+  }
 
   const primaryLinks = [
     { to: "/", label: "Dashboard", icon: <LayoutDashboard /> },
@@ -53,12 +75,8 @@ export default function MainLayout() {
             </div>
 
             <div className="flex items-center gap-2">
-              <ButtonIcon>
-                <Globe />
-              </ButtonIcon>
-              <ButtonIcon>
-                <UserRound />
-              </ButtonIcon>
+              {/* Profile dropdown */}
+              <DropDownMenuWithIcon />
             </div>
           </div>
         </header>
@@ -154,7 +172,7 @@ export default function MainLayout() {
               </div>
 
               <div className="flex flex-col gap-8">
-                <NavLink
+                {/* <NavLink
                   to="/settings"
                   className={({ isActive }) =>
                     `flex flex-col items-center ${isActive ? "text-blue-500 " : "text-white"}`
@@ -162,7 +180,7 @@ export default function MainLayout() {
                 >
                   <Settings />
                   Settings
-                </NavLink>
+                </NavLink> */}
 
                 <div className="pt-4 border-t border-white/10">
                   <nav className="flex flex-col gap-2 text-xs font-medium text-white/60 items-center">
