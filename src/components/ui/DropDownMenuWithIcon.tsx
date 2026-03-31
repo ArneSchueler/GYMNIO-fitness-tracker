@@ -13,15 +13,12 @@ import { useAuth } from "@/context/AuthContext";
 export default function DropdownMenuWithIcon() {
   const { logout } = useAuth();
 
-  const handleLogoutClick = async () => {
-    await logout();
-    // Optional: Hier könntest du noch eine Navigation oder einen Toast anzeigen
-  };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
         <Avatar>
           <AvatarImage src="https://github.com/shadcn.png" />
+          <AvatarFallback />
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent>

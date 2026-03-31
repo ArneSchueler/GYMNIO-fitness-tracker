@@ -37,7 +37,6 @@ export const CircularProgress = ({
   // 2. Tacho-Logik (Öffnung unten)
   // Wir nutzen 270° für den Bogen und 90° für die Lücke unten.
   const arcDegree = 270;
-  const gapDegree = 360 - arcDegree;
 
   // Sichtbare Länge des Bogens
   const visibleLength = (circumference * arcDegree) / 360;

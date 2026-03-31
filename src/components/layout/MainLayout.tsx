@@ -1,17 +1,13 @@
 import { useState, useRef } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { ButtonIcon } from "../ui/button/ButtonIcon";
 import {
   ChartLine,
   Dumbbell,
   LayoutDashboard,
   Menu,
   Settings,
-  UserRound,
   Utensils,
   X,
-  LogOut,
-  Globe,
 } from "lucide-react";
 
 import logo from "@/assets/gymnio-logo.png";

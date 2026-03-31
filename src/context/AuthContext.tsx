@@ -1,12 +1,6 @@
 // src/context/AuthContext.tsx
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
-import { signOut, onAuthStateChanged, User } from "firebase/auth";
+import { createContext, useContext, useEffect, useState } from "react";
+import { signOut, onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "../firebase"; // Importiere deine Auth-Instanz
 import { useNavigate } from "react-router-dom";
 

@@ -1,8 +1,6 @@
 "use client";
 
-import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Slider } from "@/components/ui/slider";
 
 interface CircularProgressProps {
   value: number;
@@ -64,7 +62,10 @@ const CircularProgress = ({
 
         {/* Progress */}
         <circle
-          className={cn("stroke-primary", progressClassName)}
+          className={cn(
+            "stroke-primary transition-all duration-1000 linear",
+            progressClassName,
+          )}
           cx={size / 2}
           cy={size / 2}
           fill="transparent"
@@ -73,6 +74,7 @@ const CircularProgress = ({
           strokeDashoffset={percentage}
           strokeLinecap={shape}
           strokeWidth={strokeWidth ?? progressStrokeWidth}
+          style={{ transition: "stroke-dashoffset 1s linear" }}
         />
       </svg>
       {showLabel && (
@@ -89,9 +91,16 @@ const CircularProgress = ({
   );
 };
 
-export default function TimerUI() {
-  const [progress, setProgress] = React.useState([100]);
+/**
+ * TimerUI is now a presentational component that receives the current progress (0-100)
+ * and label (e.g. seconds) as props.
+ */
+interface TimerUIProps {
+  value: number; // Progress from 0 (empty) to 100 (full)
+  label: number | string; // e.g. seconds remaining
+}
 
+export default function TimerUI({ value, label }: TimerUIProps) {
   return (
     <div className="mx-auto flex w-full max-w-xs flex-col items-center">
       <div className="flex items-center gap-1">
@@ -99,11 +108,11 @@ export default function TimerUI() {
           className="stroke-orange-500/25"
           labelClassName="text-xl font-bold"
           progressClassName="stroke-orange-600"
-          renderLabel={(progress) => `${progress} s`}
+          renderLabel={() => `${Math.max(Number(label), 0)} s`}
           showLabel
           size={120}
           strokeWidth={10}
-          value={progress[0]}
+          value={Math.max(value, 0)}
         />
       </div>
     </div>

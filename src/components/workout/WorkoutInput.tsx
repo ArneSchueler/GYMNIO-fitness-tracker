@@ -37,7 +37,7 @@ export default function WorkoutInput() {
           </Button>
         </div>
       )}
-      {cooldown && <TimerUI />}
+      {cooldown && <TimerUI value={90} label="Rest" />}
       <div className=" ">
         <TableActions />
       </div>
