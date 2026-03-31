@@ -1,9 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
+console.log("Mein API Key ist:", import.meta.env.VITE_FIREBASE_API_KEY);
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBjrM9xQRDkBi7StA7xgp8lv2mVwa0n6Zo",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "gymnio.firebaseapp.com",
   projectId: "gymnio",
   storageBucket: "gymnio.firebasestorage.app",
