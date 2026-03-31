@@ -5,23 +5,28 @@ import { TableActions } from "../ui/TableAction";
 import { Button } from "../ui/button";
 import TimerUI from "../ui/TimerUI";
 
-export default function WorkoutInput() {
+interface WorkoutInputProps {
+  sets: number;
+  reps: string;
+}
+
+export default function WorkoutInput({ sets, reps }: WorkoutInputProps) {
   const cooldown = false;
   return (
     <div className="flex  flex-col border p-2 rounded-xl gap-4">
       <div className="flex  justify-center gap-2">
         <Badge variant="default">
           <p>Sets: </p>
-          <p className="text-sm font-bold">3</p>
+          <p className="text-sm font-bold">{sets}</p>
         </Badge>
         <Badge variant="default">
           <p>Reps: </p>
-          <p className="text-sm font-bold">8-12</p>
+          <p className="text-sm font-bold">{reps}</p>
         </Badge>
         <Badge variant="default">
           <p>Done: </p>
           <div className="text-sm font-bold">
-            <span>1</span>/<span>3</span>{" "}
+            <span>0</span>/<span>{sets}</span>{" "}
           </div>
         </Badge>
       </div>
