@@ -9,57 +9,71 @@ export default function WorkoutTimer() {
   const [secondsLeft, setSecondsLeft] = useState(INITIAL_TIME);
   const [isRunning, setIsRunning] = useState(false);
   const timerId = useRef<NodeJS.Timeout | null>(null);
+  const lastBeepSecond = useRef<number | null>(null);
 
-  // --- Audio Logik ---
   const playTone = (freq: number, duration: number) => {
     const audioCtx = new (
       window.AudioContext || (window as any).webkitAudioContext
     )();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-
-    oscillator.type = "sine"; // "sine", "square", "sawtooth", "triangle"
+    oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-    // Lautstärke-Kurve (verhindert Knacken am Ende)
     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
       0.0001,
       audioCtx.currentTime + duration,
     );
-
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + duration);
   };
 
-  const displaySeconds = Math.ceil(secondsLeft);
+  // --- DIE PHYSIKALISCHE LOGIK ---
+
+  // 1. Wir runden den internen Wert extrem präzise
+  const currentMillis = Math.round(secondsLeft * 10);
+
+  /** * 2. DAS LABEL:
+   * Wir wollen:
+   * 5.0 bis 4.1 -> Zeige 5
+   * 4.0 bis 3.1 -> Zeige 4
+   * ...
+   * 0.0 -> Zeige 0
+   * * Das erreichen wir, indem wir Math.ceil nutzen, aber bei exakten
+   * Ganzzahlen (wie 4.0) nicht zulassen, dass er zu früh abrundet.
+   */
+  let displayValue = Math.ceil(secondsLeft);
+  if (secondsLeft > 0 && secondsLeft % 1 === 0) {
+    displayValue = secondsLeft;
+  }
 
   useEffect(() => {
-    if (!isRunning) return;
-    if (displaySeconds <= 3 && displaySeconds > 0) {
-      playTone(880, 0.1);
-    } else if (displaySeconds === 0) {
-      playTone(440, 0.8);
+    // Sound-Trigger: Wir prüfen auf die "glatte" Millisekunden-Ebene
+    // 30 = 3.0s, 20 = 2.0s, 10 = 1.0s, 0 = 0.0s
+    if (currentMillis % 10 === 0 && currentMillis !== lastBeepSecond.current) {
+      if (currentMillis <= 30 && currentMillis > 0) {
+        playTone(880, 0.1);
+        lastBeepSecond.current = currentMillis;
+      } else if (currentMillis === 0) {
+        playTone(440, 0.8);
+        lastBeepSecond.current = 0;
+      }
     }
-  }, [displaySeconds, isRunning]);
+  }, [currentMillis]);
 
-  // --- NEU: Toggle Logik für Start/Pause ---
   const toggleTimer = () => {
     if (isRunning) {
-      // PAUSE: Intervall stoppen, aber Zeit behalten
       if (timerId.current) clearInterval(timerId.current);
       setIsRunning(false);
     } else {
-      // START/RESUME: Nur starten, wenn noch Zeit übrig ist
       if (secondsLeft <= 0) return;
       setIsRunning(true);
-
       timerId.current = setInterval(() => {
         setSecondsLeft((prev) => {
-          const nextValue = prev - 0.1;
+          // Wir ziehen 0.1 ab und fixieren die Floats
+          const nextValue = parseFloat((prev - 0.1).toFixed(1));
           if (nextValue <= 0) {
             if (timerId.current) clearInterval(timerId.current);
             setIsRunning(false);
@@ -75,26 +89,19 @@ export default function WorkoutTimer() {
     if (timerId.current) clearInterval(timerId.current);
     setIsRunning(false);
     setSecondsLeft(INITIAL_TIME);
+    lastBeepSecond.current = null;
   };
-
-  // Cleanup bei Unmount
-  useEffect(() => {
-    return () => {
-      if (timerId.current) clearInterval(timerId.current);
-    };
-  }, []);
 
   const percent = (secondsLeft / INITIAL_TIME) * 100;
 
   return (
     <div className="flex flex-col items-center gap-6 p-4">
-      <TimerUI value={percent} label={displaySeconds} />
+      <TimerUI value={percent} label={displayValue} />
 
       <div className="grid w-full max-w-[240px] grid-cols-4 gap-2">
-        {/* Dynamischer Button: Wechselt zwischen Start und Pause */}
         <Button
-          variant={isRunning ? "outline" : "default"} // Optisches Feedback bei Pause
-          className="col-span-3 flex gap-2 transition-all"
+          variant={isRunning ? "outline" : "default"}
+          className="col-span-3 flex gap-2"
           onClick={toggleTimer}
           disabled={secondsLeft === 0}
         >
@@ -110,10 +117,8 @@ export default function WorkoutTimer() {
             </>
           )}
         </Button>
-
         <Button
           variant="secondary"
-          className="col-span-1"
           onClick={handleReset}
           disabled={secondsLeft === INITIAL_TIME && !isRunning}
         >

@@ -63,7 +63,7 @@ const CircularProgress = ({
         {/* Progress */}
         <circle
           className={cn(
-            "stroke-primary transition-all duration-1000 linear",
+            "stroke-primary transition-all duration-100 linear",
             progressClassName,
           )}
           cx={size / 2}
@@ -74,7 +74,7 @@ const CircularProgress = ({
           strokeDashoffset={percentage}
           strokeLinecap={shape}
           strokeWidth={strokeWidth ?? progressStrokeWidth}
-          style={{ transition: "stroke-dashoffset 1s linear" }}
+          style={{ transition: "stroke-dashoffset 0.1s linear" }}
         />
       </svg>
       {showLabel && (
