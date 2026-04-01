@@ -14,7 +14,20 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import ProgressHeader from "./ProgressHeader";
 import WorkoutHeader from "./WorkoutHeader";
 import WorkoutInput from "./WorkoutInput";
-import type { Exercise } from "@/types/workout";
+
+type Exercise = {
+  id: string;
+  name: string;
+  description?: string;
+  phase?: string;
+  sets?: number;
+  reps?: string;
+  weight?: string;
+  notes?: string;
+  muscleGroups?: string[];
+  image?: string;
+  duration?: number; // for timer-based exercises
+};
 
 interface WorkoutCardProps {
   exercise: Exercise;
@@ -73,7 +86,7 @@ export default function WorkoutCard({
             <ProgressHeader
               current={currentPhaseExerciseNumber}
               total={totalPhaseExercises}
-              phaseName={exercise.phase}
+              phaseName={exercise.phase ?? "Training"}
             />
           </div>
           {/* 
@@ -95,7 +108,7 @@ export default function WorkoutCard({
                 <div className="flex justify-between">
                   <CardTitle>{exercise.name}</CardTitle>
                   <CardAction>
-                    {exercise.muscleGroups.map((group: string) => (
+                    {exercise.muscleGroups?.map((group: string) => (
                       <Badge key={group} variant="secondary">
                         {group}
                       </Badge>
@@ -105,12 +118,13 @@ export default function WorkoutCard({
                 {/* Guard against undefined description */}
                 <CardDescription>{exercise.description ?? ""}</CardDescription>
               </div>
-              {isTimerExercise && <WorkoutTimer duration={exercise.duration} />}
+              {isTimerExercise && (
+                <WorkoutTimer duration={exercise.duration ?? 0} />
+              )}
               {isRepsExercise && (
                 <WorkoutInput
-                  sets={exercise.sets}
-                  reps={exercise.reps}
-                  name={exercise.name}
+                  sets={exercise.sets ?? 0}
+                  reps={exercise.reps ?? "0"}
                   phase={exercise.phase}
                   completedSets={completedSets}
                   onAddSet={onAddSet}

@@ -255,8 +255,7 @@ export const workoutPlans: WorkoutPlan[] = [
         reps: "6-10",
         weight: "~12 kg",
         muscleGroups: ["Schultern", "Trizeps"],
-        image:
-          "https://images.unsplash.com/photo-1599058918140-32b95743bb84?fit=crop&w=400&q=80",
+        image: schulterdruecken,
       },
       {
         id: "b8",

@@ -7,7 +7,6 @@ import TimerUI from "../ui/TimerUI";
 import { useState, useEffect } from "react";
 
 interface WorkoutInputProps {
-  name: string;
   sets: number;
   reps: string;
   phase?: string;
@@ -17,7 +16,6 @@ interface WorkoutInputProps {
 }
 
 export default function WorkoutInput({
-  name,
   sets,
   reps,
   phase = "main",

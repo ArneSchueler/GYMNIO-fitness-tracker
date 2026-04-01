@@ -40,9 +40,11 @@ export default function WorkoutSession() {
           wakeLock.current = await (navigator as any).wakeLock.request(
             "screen",
           );
-          wakeLock.current.onrelease = () => {
-            wakeLock.current = null;
-          };
+          if (wakeLock.current) {
+            wakeLock.current.onrelease = () => {
+              console.log("Wake Lock was released");
+            };
+          }
         } catch (err: any) {
           // Fail silently. Wake lock is a nice-to-have, not essential.
         }
