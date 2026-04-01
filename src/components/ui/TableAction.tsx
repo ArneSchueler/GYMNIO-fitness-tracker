@@ -20,9 +20,13 @@ import { Badge } from "./badge";
 
 interface TableActionsProps {
   sets: { reps: number; weight: number }[];
+  prevSets?: { reps: number; weight: number }[];
 }
 
-export function TableActions({ sets = [] }: TableActionsProps) {
+export function TableActions({ sets = [], prevSets = [] }: TableActionsProps) {
+  const nextSetIndex = sets.length;
+  const prevSet = prevSets[nextSetIndex];
+
   return (
     <Table>
       <TableHeader>
@@ -63,18 +67,20 @@ export function TableActions({ sets = [] }: TableActionsProps) {
             </TableRow>
           );
         })}
-        <TableRow className="opacity-60 bg-muted/30">
-          <TableCell className="font-medium">
-            <Badge variant="secondary">Prev</Badge>
-          </TableCell>
-          <TableCell>10</TableCell>
-          <TableCell>14</TableCell>
-          <TableCell className="text-right">
-            <Button variant="ghost" size="icon" className="size-8" disabled>
-              <MoreHorizontalIcon className="opacity-50" />
-            </Button>
-          </TableCell>
-        </TableRow>
+        {prevSet && (
+          <TableRow className="opacity-60 bg-muted/30">
+            <TableCell className="font-medium">
+              <Badge variant="secondary">Prev {nextSetIndex + 1}</Badge>
+            </TableCell>
+            <TableCell>{prevSet.reps}</TableCell>
+            <TableCell>{prevSet.weight}</TableCell>
+            <TableCell className="text-right">
+              <Button variant="ghost" size="icon" className="size-8" disabled>
+                <MoreHorizontalIcon className="opacity-50" />
+              </Button>
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );

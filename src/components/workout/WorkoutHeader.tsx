@@ -4,9 +4,26 @@ import { Button } from "../ui/button";
 
 interface WorkoutHeaderProps {
   workoutName: string;
+  elapsedTime: number;
 }
 
-export default function WorkoutHeader({ workoutName }: WorkoutHeaderProps) {
+function formatTime(totalSeconds: number) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const paddedMinutes = String(minutes).padStart(2, "0");
+  const paddedSeconds = String(seconds).padStart(2, "0");
+
+  return hours > 0
+    ? `${String(hours).padStart(2, "0")}:${paddedMinutes}:${paddedSeconds}`
+    : `${paddedMinutes}:${paddedSeconds}`;
+}
+
+export default function WorkoutHeader({
+  workoutName,
+  elapsedTime,
+}: WorkoutHeaderProps) {
   return (
     <div className="grid w-full grid-cols-6 items-center gap-2">
       <Link to={"/"}>
@@ -19,7 +36,9 @@ export default function WorkoutHeader({ workoutName }: WorkoutHeaderProps) {
           {workoutName}
         </p>
       </div>
-      <p className="text-md font-normal">00:45</p>
+      <p className="text-md font-normal tabular-nums">
+        {formatTime(elapsedTime)}
+      </p>
     </div>
   );
 }

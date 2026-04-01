@@ -20,22 +20,32 @@ interface WorkoutCardProps {
   exercise: Exercise;
   onNext: () => void;
   onPrevious: () => void;
+  onFinish: () => void;
   isFirst: boolean;
   isLast: boolean;
   workoutName: string;
   currentPhaseExerciseNumber: number;
   totalPhaseExercises: number;
+  completedSets: { reps: number; weight: number }[];
+  onAddSet: (set: { reps: number; weight: number }) => void;
+  prevSets?: { reps: number; weight: number }[];
+  elapsedTime: number;
 }
 
 export default function WorkoutCard({
   exercise,
   onNext,
   onPrevious,
+  onFinish,
   isFirst,
   isLast,
   workoutName,
   currentPhaseExerciseNumber,
   totalPhaseExercises,
+  completedSets,
+  onAddSet,
+  prevSets,
+  elapsedTime,
 }: WorkoutCardProps) {
   // Card type logic is skipped (no .type defined in the provided Exercise type)
   // We'll adapt here: timer if .duration exists, reps if .sets and .reps exist.
@@ -51,7 +61,7 @@ export default function WorkoutCard({
           - On desktop: match md:max-w-md and md:w-[420px] like the Card.
         */}
         <div className="w-full max-w-sm mx-auto md:max-w-md md:w-[420px]">
-          <WorkoutHeader workoutName={workoutName} />
+          <WorkoutHeader workoutName={workoutName} elapsedTime={elapsedTime} />
         </div>
         <div className="flex flex-col gap-6 w-full">
           {/* 
@@ -102,6 +112,9 @@ export default function WorkoutCard({
                   reps={exercise.reps}
                   name={exercise.name}
                   phase={exercise.phase}
+                  completedSets={completedSets}
+                  onAddSet={onAddSet}
+                  prevSets={prevSets}
                 />
               )}
             </CardContent>
@@ -115,7 +128,7 @@ export default function WorkoutCard({
                 <ArrowLeft />
                 <span>Previous</span>
               </Button>
-              <Button className="w-full" onClick={onNext}>
+              <Button className="w-full" onClick={isLast ? onFinish : onNext}>
                 <span>{isLast ? "Finish" : "Next"}</span>
                 {!isLast && <ArrowRight />}
               </Button>

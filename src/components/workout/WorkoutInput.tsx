@@ -11,6 +11,9 @@ interface WorkoutInputProps {
   sets: number;
   reps: string;
   phase?: string;
+  completedSets: { reps: number; weight: number }[];
+  onAddSet: (set: { reps: number; weight: number }) => void;
+  prevSets?: { reps: number; weight: number }[];
 }
 
 export default function WorkoutInput({
@@ -18,10 +21,10 @@ export default function WorkoutInput({
   sets,
   reps,
   phase = "main",
+  completedSets,
+  onAddSet,
+  prevSets = [],
 }: WorkoutInputProps) {
-  const [completedSets, setCompletedSets] = useState<
-    { reps: number; weight: number }[]
-  >([]);
   const [repsInput, setRepsInput] = useState("");
   const [weightInput, setWeightInput] = useState("");
   const [restTime, setRestTime] = useState(0);
@@ -37,15 +40,11 @@ export default function WorkoutInput({
 
   const handleAddSet = () => {
     if (!repsInput || !weightInput) return;
-    const newSets = [
-      ...completedSets,
-      { reps: Number(repsInput), weight: Number(weightInput) },
-    ];
-    setCompletedSets(newSets);
+    onAddSet({ reps: Number(repsInput), weight: Number(weightInput) });
     // Setzt das Rep-Feld für das nächste Set zurück
     setRepsInput("");
 
-    if (newSets.length < sets) {
+    if (completedSets.length + 1 < sets) {
       setRestTime(90); // 90 Sekunden Pause starten
     }
   };
@@ -54,7 +53,6 @@ export default function WorkoutInput({
 
   return (
     <div className="flex  flex-col border p-2 rounded-xl gap-4">
-      <h3 className="text-lg font-bold text-center">{name}</h3>
       <div className="flex  justify-center gap-2">
         <Badge variant="default">
           <p>Sets: </p>
@@ -111,7 +109,7 @@ export default function WorkoutInput({
       )}
       {isMainPhase && (
         <div className=" ">
-          <TableActions sets={completedSets} />
+          <TableActions sets={completedSets} prevSets={prevSets} />
         </div>
       )}
     </div>
