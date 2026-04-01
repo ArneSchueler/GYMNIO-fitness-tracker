@@ -23,8 +23,8 @@ interface WorkoutCardProps {
   isFirst: boolean;
   isLast: boolean;
   workoutName: string;
-  currentExerciseNumber: number;
-  totalExercises: number;
+  currentPhaseExerciseNumber: number;
+  totalPhaseExercises: number;
 }
 
 export default function WorkoutCard({
@@ -34,26 +34,45 @@ export default function WorkoutCard({
   isFirst,
   isLast,
   workoutName,
-  currentExerciseNumber,
-  totalExercises,
+  currentPhaseExerciseNumber,
+  totalPhaseExercises,
 }: WorkoutCardProps) {
-  const isTimerExercise = exercise.type === "time";
-  const isRepsExercise = exercise.type === "reps";
+  // Card type logic is skipped (no .type defined in the provided Exercise type)
+  // We'll adapt here: timer if .duration exists, reps if .sets and .reps exist.
+  const isTimerExercise = !!exercise.duration;
+  const isRepsExercise = !!exercise.sets && !!exercise.reps;
 
   return (
     <div className="flex flex-col justify-center items-center h-full py-12">
-      <div className="flex flex-col h-full justify-between items-center gap-4">
-        <WorkoutHeader
-          workoutName={workoutName}
-          exerciseCategory={exercise.phase}
-        />
-        <div className="flex flex-col gap-6">
-          <ProgressHeader
-            current={currentExerciseNumber}
-            total={totalExercises}
-            phaseName={exercise.phase}
-          />
-          <Card className="flex flex-col gap-6 mx-auto w-full max-w-sm pt-5 ">
+      <div className="flex flex-col h-full justify-between items-center gap-4 w-full">
+        {/* 
+          Wrap WorkoutHeader in a div that matches card width on desktop.
+          - On mobile: w-full, no max-width constraint.
+          - On desktop: match md:max-w-md and md:w-[420px] like the Card.
+        */}
+        <div className="w-full max-w-sm mx-auto md:max-w-md md:w-[420px]">
+          <WorkoutHeader workoutName={workoutName} />
+        </div>
+        <div className="flex flex-col gap-6 w-full">
+          {/* 
+            Make ProgressHeader exactly as wide as Card: 
+            - On mobile: w-full max-w-sm
+            - On desktop: md:max-w-md md:w-[420px]
+          */}
+          <div className="w-full max-w-sm mx-auto md:max-w-md md:w-[420px]">
+            <ProgressHeader
+              current={currentPhaseExerciseNumber}
+              total={totalPhaseExercises}
+              phaseName={exercise.phase}
+            />
+          </div>
+          {/* 
+            Card resizing behavior:
+              - On mobile: take full width of the screen (w-full, no max-width)
+              - On larger screens: limit to max-w-sm 
+              - min-h-[420px] (example) keeps the card from shrinking smaller, ensuring consistent height
+          */}
+          <Card className="flex flex-col gap-6 mx-auto w-full max-w-sm pt-5 md:max-w-md md:w-[420px] min-h-[420px]">
             <CardHeader className="flex flex-col w-full gap-4">
               <img
                 src={exercise.image}
@@ -66,18 +85,23 @@ export default function WorkoutCard({
                 <div className="flex justify-between">
                   <CardTitle>{exercise.name}</CardTitle>
                   <CardAction>
-                    {exercise.muscleGroups.map((group) => (
+                    {exercise.muscleGroups.map((group: string) => (
                       <Badge key={group} variant="secondary">
                         {group}
                       </Badge>
                     ))}
                   </CardAction>
                 </div>
-                <CardDescription>{exercise.description}</CardDescription>
+                {/* Guard against undefined description */}
+                <CardDescription>{exercise.description ?? ""}</CardDescription>
               </div>
               {isTimerExercise && <WorkoutTimer duration={exercise.duration} />}
               {isRepsExercise && (
-                <WorkoutInput sets={exercise.sets} reps={exercise.reps} />
+                <WorkoutInput
+                  sets={exercise.sets}
+                  reps={exercise.reps}
+                  name={exercise.name}
+                />
               )}
             </CardContent>
             <CardFooter className="grid  grid-cols-2 mt-5 gap-2">

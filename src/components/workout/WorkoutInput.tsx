@@ -6,14 +6,16 @@ import { Button } from "../ui/button";
 import TimerUI from "../ui/TimerUI";
 
 interface WorkoutInputProps {
+  name: string;
   sets: number;
   reps: string;
 }
 
-export default function WorkoutInput({ sets, reps }: WorkoutInputProps) {
+export default function WorkoutInput({ name, sets, reps }: WorkoutInputProps) {
   const cooldown = false;
   return (
     <div className="flex  flex-col border p-2 rounded-xl gap-4">
+      <h3 className="text-lg font-bold text-center">{name}</h3>
       <div className="flex  justify-center gap-2">
         <Badge variant="default">
           <p>Sets: </p>

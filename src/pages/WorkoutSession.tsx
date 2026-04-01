@@ -1,57 +1,23 @@
 import WorkoutCard from "@/components/workout/WorkoutCard";
 import { useState, useEffect, useRef } from "react";
-import type { Workout } from "@/types/workout";
-
-const mockWorkout: Workout = {
-  id: "workout-a",
-  name: "Workout A - Oberkörper",
-  exercises: [
-    {
-      type: "time",
-      name: "Armkreisen",
-      description:
-        "Kreise deine Arme langsam vorwärts, dann rückwärts. Halte die Bewegung kontrolliert und gleichmäßig.",
-      image: "https://avatar.vercel.sh/shadcn1",
-      duration: 30, // 30 seconds
-      muscleGroups: ["Schultern"],
-      phase: "Warmup",
-    },
-    {
-      type: "reps",
-      name: "Bankdrücken",
-      description: "Langhantel-Bankdrücken für die Brust.",
-      image: "https://avatar.vercel.sh/shadcn2",
-      sets: 3,
-      reps: "8-12",
-      muscleGroups: ["Brust", "Trizeps"],
-      phase: "Workout",
-    },
-    {
-      type: "time",
-      name: "Plank",
-      description: "Halte die Unterarmstütz-Position.",
-      image: "https://avatar.vercel.sh/shadcn3",
-      duration: 60, // 60 seconds
-      muscleGroups: ["Core"],
-      phase: "Workout",
-    },
-  ],
-};
+import { workoutPlans } from "@/components/workout/workouts";
 
 export default function WorkoutSession() {
+  const [currentWorkoutIndex] = useState(0); // You can allow this to be changed via routing, params, etc.
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const wakeLock = useRef<WakeLockSentinel | null>(null);
 
+  // Select the workout you want to show: here hardcoded to the first one
+  const workout = workoutPlans[currentWorkoutIndex];
+
   useEffect(() => {
     const acquireWakeLock = async () => {
-      // Check if the Screen Wake Lock API is supported by the browser
       if ("wakeLock" in navigator) {
         try {
-          wakeLock.current = await navigator.wakeLock.request("screen");
+          wakeLock.current = await (navigator as any).wakeLock.request(
+            "screen",
+          );
           console.log("Screen Wake Lock is active.");
-
-          // The wake lock is released when the user switches tabs or minimizes the window.
-          // We add an event listener to be notified of this.
           wakeLock.current.onrelease = () => {
             console.log("Screen Wake Lock was released.");
             wakeLock.current = null;
@@ -74,7 +40,6 @@ export default function WorkoutSession() {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Clean up when the component unmounts
     return () => {
       if (wakeLock.current) {
         wakeLock.current.release();
@@ -82,17 +47,27 @@ export default function WorkoutSession() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
-  const workout = mockWorkout; // In a real app, this would come from a service or API
 
   const currentExercise = workout.exercises[currentExerciseIndex];
+  // Calculate how many exercises in the *current phase* (e.g., warm-up, main, cool-down) of the current exercise
+  const currentPhase = currentExercise.phase;
+  const phaseExercises = workout.exercises.filter(
+    (exercise) => exercise.phase === currentPhase,
+  );
   const totalExercises = workout.exercises.length;
+  const totalPhaseExercises = phaseExercises.length;
+  const currentPhaseExerciseNumber =
+    phaseExercises.findIndex((exercise) => exercise.id === currentExercise.id) +
+    1;
 
   const goToNextExercise = () => {
-    setCurrentExerciseIndex((prev) => Math.min(prev + 1, totalExercises - 1));
+    setCurrentExerciseIndex((previousIndex) =>
+      Math.min(previousIndex + 1, totalExercises - 1),
+    );
   };
 
   const goToPreviousExercise = () => {
-    setCurrentExerciseIndex((prev) => Math.max(prev - 1, 0));
+    setCurrentExerciseIndex((previousIndex) => Math.max(previousIndex - 1, 0));
   };
 
   return (
@@ -102,9 +77,9 @@ export default function WorkoutSession() {
       onPrevious={goToPreviousExercise}
       isFirst={currentExerciseIndex === 0}
       isLast={currentExerciseIndex === totalExercises - 1}
-      workoutName={workout.name}
-      currentExerciseNumber={currentExerciseIndex + 1}
-      totalExercises={totalExercises}
+      workoutName={workout.title}
+      currentPhaseExerciseNumber={currentPhaseExerciseNumber}
+      totalPhaseExercises={totalPhaseExercises}
     />
   );
 }
