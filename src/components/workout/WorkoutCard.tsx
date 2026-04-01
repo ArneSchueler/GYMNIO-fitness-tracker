@@ -44,7 +44,7 @@ export default function WorkoutCard({
 
   return (
     <div className="flex flex-col justify-center items-center h-full py-12">
-      <div className="flex flex-col h-full justify-between items-center gap-4 w-full">
+      <div className="flex flex-col h-full  items-center gap-8 w-full">
         {/* 
           Wrap WorkoutHeader in a div that matches card width on desktop.
           - On mobile: w-full, no max-width constraint.
@@ -101,6 +101,7 @@ export default function WorkoutCard({
                   sets={exercise.sets}
                   reps={exercise.reps}
                   name={exercise.name}
+                  phase={exercise.phase}
                 />
               )}
             </CardContent>
