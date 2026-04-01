@@ -3,9 +3,12 @@ import { Button } from "../ui/button";
 import { useRef, useState, useEffect } from "react";
 import TimerUI from "../ui/TimerUI";
 
-const INITIAL_TIME = 5;
+interface WorkoutTimerProps {
+  duration: number;
+}
 
-export default function WorkoutTimer() {
+export default function WorkoutTimer({ duration }: WorkoutTimerProps) {
+  const INITIAL_TIME = duration;
   const [secondsLeft, setSecondsLeft] = useState(INITIAL_TIME);
   const [isRunning, setIsRunning] = useState(false);
   const timerId = useRef<NodeJS.Timeout | null>(null);
