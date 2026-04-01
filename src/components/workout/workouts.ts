@@ -1,3 +1,25 @@
+// import catCow from "@/assets/exercises/cat-cow.jpg";
+// import birdDog from "@/assets/exercises/bird-dog.jpg";
+import scapulaPushups from "@/assets/exercises/scapula.gif";
+import boxSquats from "@/assets/exercises/squats.webp";
+import khBankdruecken from "@/assets/exercises/benchpress.webp";
+// import khRudern from "@/assets/exercises/kh-rudern.jpg";
+import seitheben from "@/assets/exercises/sideraises.webp";
+// import khShrugs from "@/assets/exercises/kh-shrugs.jpg";
+// import crunches from "@/assets/exercises/crunches.jpg";
+// import tuehrrahmenStretch from "@/assets/exercises/tuehrrahmen-stretch.jpg";
+// import ausfallschrittImStehen from "@/assets/exercises/ausfallschritt-im-stehen.jpg";
+// import figure4Stretch from "@/assets/exercises/figure-4-stretch.jpg";
+// import puppyPose from "@/assets/exercises/puppy-pose.jpg";
+// import childsPose from "@/assets/exercises/childs-pose.jpg";
+// import piriformisStretch from "@/assets/exercises/piriformis-stretch.jpg";
+// import HipStretch from "@/assets/exercises/9090-hip-stretch.jpg";
+import gluteBridge from "@/assets/exercises/glute-bridges.webp";
+// import latzug from "@/assets/exercises/latzug.jpg";
+import schulterdruecken from "@/assets/exercises/shoulderpress.webp";
+// import schrabankdruecken from "@/assets/exercises/schrabankdruecken.jpg";
+// import reverseFlys from "@/assets/exercises/reverse-flys.jpg";
+
 export type WorkoutPhase = "warm-up" | "main" | "cool-down";
 
 export interface Exercise {
@@ -53,8 +75,7 @@ export const workoutPlans: WorkoutPlan[] = [
         sets: 1,
         reps: "12",
         muscleGroups: ["Schultern", "Rücken"],
-        image:
-          "https://images.unsplash.com/photo-1556821865-6b5b748d3a51?fit=crop&w=400&q=80",
+        image: scapulaPushups,
       },
       {
         id: "a4",
@@ -63,8 +84,7 @@ export const workoutPlans: WorkoutPlan[] = [
         sets: 1,
         reps: "10",
         muscleGroups: ["Beine", "Gluteus"],
-        image:
-          "https://images.unsplash.com/photo-1509228468518-cd60f1f1af73?fit=crop&w=400&q=80",
+        image: boxSquats,
       },
 
       // Hauptteil
@@ -76,8 +96,7 @@ export const workoutPlans: WorkoutPlan[] = [
         reps: "8-10",
         weight: "~14,5 kg",
         muscleGroups: ["Beine", "Gluteus"],
-        image:
-          "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?fit=crop&w=400&q=80",
+        image: boxSquats,
       },
       {
         id: "a6",
@@ -87,8 +106,7 @@ export const workoutPlans: WorkoutPlan[] = [
         reps: "6-10",
         weight: "~14,5 kg",
         muscleGroups: ["Brust", "Trizeps", "Schultern"],
-        image:
-          "https://images.unsplash.com/photo-1599058918140-32b95743bb84?fit=crop&w=400&q=80",
+        image: khBankdruecken,
       },
       {
         id: "a7",
@@ -109,8 +127,7 @@ export const workoutPlans: WorkoutPlan[] = [
         reps: "12-15",
         weight: "3 kg",
         muscleGroups: ["Schultern"],
-        image:
-          "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?fit=crop&w=400&q=80",
+        image: seitheben,
       },
       {
         id: "a9",
@@ -186,8 +203,7 @@ export const workoutPlans: WorkoutPlan[] = [
         phase: "warm-up",
         duration: 45,
         muscleGroups: ["Gluteus", "Core"],
-        image:
-          "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?fit=crop&w=400&q=80",
+        image: gluteBridge,
       },
       {
         id: "b3",
@@ -219,8 +235,7 @@ export const workoutPlans: WorkoutPlan[] = [
         reps: "10-15",
         weight: "~12 kg",
         muscleGroups: ["Gluteus", "Core"],
-        image:
-          "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?fit=crop&w=400&q=80",
+        image: gluteBridge,
       },
       {
         id: "b6",

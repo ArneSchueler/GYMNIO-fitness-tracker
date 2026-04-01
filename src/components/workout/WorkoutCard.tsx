@@ -87,7 +87,7 @@ export default function WorkoutCard({
               <img
                 src={exercise.image}
                 alt={exercise.name}
-                className="relative rounded-2xl z-20 aspect-video w-full object-cover brightness-60 grayscale dark:brightness-40"
+                className="relative rounded-2xl z-20 aspect-video w-full object-contain "
               />
             </CardHeader>
             <CardContent className="flex flex-col gap-12">
