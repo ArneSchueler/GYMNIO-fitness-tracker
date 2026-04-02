@@ -1,14 +1,14 @@
-// import catCow from "@/assets/exercises/cat-cow.jpg";
-// import birdDog from "@/assets/exercises/bird-dog.jpg";
+import catCow from "@/assets/exercises/cat-cow.gif";
+import birdDog from "@/assets/exercises/bird-dog.gif";
 import scapulaPushups from "@/assets/exercises/scapula.gif";
 import boxSquats from "@/assets/exercises/squats.webp";
 import khBankdruecken from "@/assets/exercises/benchpress.webp";
-// import khRudern from "@/assets/exercises/kh-rudern.jpg";
+import rowing from "@/assets/exercises/rowing.gif";
 import seitheben from "@/assets/exercises/sideraises.webp";
-// import khShrugs from "@/assets/exercises/kh-shrugs.jpg";
-// import crunches from "@/assets/exercises/crunches.jpg";
-// import tuehrrahmenStretch from "@/assets/exercises/tuehrrahmen-stretch.jpg";
-// import ausfallschrittImStehen from "@/assets/exercises/ausfallschritt-im-stehen.jpg";
+import shrugs from "@/assets/exercises/Shrug.gif";
+import crunches from "@/assets/exercises/crunches.gif";
+import tuehrrahmenStretch from "@/assets/exercises/doorway-chest-stretch.gif";
+import ausfallschrittImStehen from "@/assets/exercises/Kneeling-Hip-Flexor-Stretch.gif";
 // import figure4Stretch from "@/assets/exercises/figure-4-stretch.jpg";
 // import puppyPose from "@/assets/exercises/puppy-pose.jpg";
 // import childsPose from "@/assets/exercises/childs-pose.jpg";
@@ -55,8 +55,7 @@ export const workoutPlans: WorkoutPlan[] = [
         phase: "warm-up",
         duration: 45,
         muscleGroups: ["Rücken", "Wirbelsäule"],
-        image:
-          "https://images.unsplash.com/photo-1517960413843-0aee8e2d471c?fit=crop&w=400&q=80",
+        image: catCow,
       },
       {
         id: "a2",
@@ -65,8 +64,7 @@ export const workoutPlans: WorkoutPlan[] = [
         sets: 2,
         reps: "10/Seite",
         muscleGroups: ["Core", "Rücken"],
-        image:
-          "https://images.unsplash.com/photo-1464983953574-0892a716854b?fit=crop&w=400&q=80",
+        image: birdDog,
       },
       {
         id: "a3",
@@ -116,8 +114,7 @@ export const workoutPlans: WorkoutPlan[] = [
         reps: "8-12",
         weight: "~14,5 kg",
         muscleGroups: ["Rücken", "Bizeps"],
-        image:
-          "https://images.unsplash.com/photo-1571019613914-85f342c1d34b?fit=crop&w=400&q=80",
+        image: rowing,
       },
       {
         id: "a8",
@@ -138,8 +135,7 @@ export const workoutPlans: WorkoutPlan[] = [
         weight: "~14,5 kg",
         notes: "Oben 2 Sek. halten",
         muscleGroups: ["Nacken", "Schultern"],
-        image:
-          "https://images.unsplash.com/photo-1445383938728-38f009e2b250?fit=crop&w=400&q=80",
+        image: shrugs,
       },
       {
         id: "a10",
@@ -148,8 +144,7 @@ export const workoutPlans: WorkoutPlan[] = [
         sets: 3,
         reps: "12-15",
         muscleGroups: ["Bauch"],
-        image:
-          "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?fit=crop&w=400&q=80",
+        image: crunches,
       },
 
       // Cool-down
@@ -159,8 +154,7 @@ export const workoutPlans: WorkoutPlan[] = [
         phase: "cool-down",
         duration: 60,
         muscleGroups: ["Brust", "Schultern"],
-        image:
-          "https://images.unsplash.com/photo-1534367610401-f58b3287df71?fit=crop&w=400&q=80",
+        image: tuehrrahmenStretch,
       },
       {
         id: "a12",
@@ -168,8 +162,7 @@ export const workoutPlans: WorkoutPlan[] = [
         phase: "cool-down",
         duration: 60,
         muscleGroups: ["Beine", "Gluteus", "Hüfte"],
-        image:
-          "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80",
+        image: ausfallschrittImStehen,
       },
       {
         id: "a13",
