@@ -1,14 +1,14 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 // Import der Seiten
 import Dashboard from "@/pages/Dashboard";
 import ExerciseLibrary from "@/pages/ExerciseLibrary";
 import RecipeCatalog from "@/pages/RecipeCatalog";
 import MainLayout from "@/components/layout/MainLayout";
-import WorkoutSession from "./pages/WorkoutSession";
-import LoginPage from "./pages/Auth/LoginPage";
-import SignupPage from "./pages/Auth/SignupPage";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import WorkoutSession from "@/pages/WorkoutSession";
+import LoginPage from "@/pages/Auth/LoginPage";
+import SignupPage from "@/pages/Auth/SignupPage";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 function App() {
   return (
@@ -29,6 +29,7 @@ function App() {
           <Route path="/cancellation-policy" element={<RecipeCatalog />} />
         </Route>
       </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
