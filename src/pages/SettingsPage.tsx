@@ -3,7 +3,7 @@ import { useState } from "react";
 
 export default function SettingsPage() {
   // In a real implementation, you would fetch this from your user's profile database document
-  const [isFitbitLinked, setIsFitbitLinked] = useState(false);
+  const [isFitbitLinked] = useState(false);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 text-slate-900 dark:text-slate-100">
