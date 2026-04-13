@@ -33,29 +33,32 @@ export default function WorkoutSession() {
   // Select the workout you want to show: here hardcoded to the first one
   const workout = workoutPlans[currentWorkoutIndex];
 
+  // Ersetze dein komplettes useEffect für den WakeLock durch dieses:
   useEffect(() => {
     let isMounted = true;
 
     const acquireWakeLock = async () => {
+      // Check if the API exists in the browser
       if ("wakeLock" in navigator) {
         try {
-          const lock = await (navigator as any).wakeLock.request("screen");
+          // @ts-ignore - Some TS versions don't have WakeLock defined yet
+          const lock = await navigator.wakeLock.request("screen");
 
-          // If the component unmounted while the promise was resolving, release immediately
           if (!isMounted) {
             lock.release();
             return;
           }
 
           wakeLock.current = lock;
-          wakeLock.current.onrelease = () => {
+
+          // Sicherer Zugriff mit optionalem Chaining
+          wakeLock.current?.addEventListener("release", () => {
             console.log("Wake Lock was released");
-            if (wakeLock.current === lock) {
-              wakeLock.current = null;
-            }
-          };
-        } catch (err: any) {
-          // Fail silently. Wake lock is a nice-to-have, not essential.
+            wakeLock.current = null;
+          });
+        } catch (err) {
+          // Fail silently
+          console.warn("Wake Lock acquisition failed", err);
         }
       }
     };
@@ -67,14 +70,13 @@ export default function WorkoutSession() {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    acquireWakeLock(); // Acquire on initial load
+    acquireWakeLock();
 
     return () => {
       isMounted = false;
-      if (wakeLock.current) {
-        wakeLock.current.release();
-        wakeLock.current = null;
-      }
+      // Fix: Optional Chaining verhindert den Build-Fehler
+      wakeLock.current?.release().catch(() => {});
+      wakeLock.current = null;
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
