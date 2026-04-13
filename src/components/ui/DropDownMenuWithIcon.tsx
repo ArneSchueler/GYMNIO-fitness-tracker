@@ -1,4 +1,5 @@
 import { LogOut, Settings, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function DropdownMenuWithIcon() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <DropdownMenu>
@@ -27,7 +29,7 @@ export default function DropdownMenuWithIcon() {
         <DropdownMenuItem>
           <User className="h-4 w-4" /> Profile
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/settings")}>
           <Settings className="h-4 w-4" /> Settings
         </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onSelect={logout}>

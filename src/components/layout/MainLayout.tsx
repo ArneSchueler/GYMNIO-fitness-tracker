@@ -124,7 +124,7 @@ export default function MainLayout() {
                     <Settings />
                     Settings
                   </NavLink>
-
+                  //Footer Links
                   <div className="pt-4 border-t border-white/10">
                     <nav className="flex flex-col gap-2 text-xs font-medium text-white/60">
                       {footerLinks.map((l) => (

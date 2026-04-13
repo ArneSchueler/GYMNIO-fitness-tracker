@@ -27,3 +27,25 @@ export function getStatusColor(
   if (percentage < 70) return "stroke-orange-500";
   return "stroke-emerald-500"; // Ziel fast erreicht oder überschritten
 }
+
+export const handleFitbitLogin = () => {
+  const clientId =
+    import.meta.env.VITE_FITBIT_CLIENT_ID || "YOUR_FITBIT_CLIENT_ID";
+  const redirectUri = `${window.location.origin}/fitbit-callback`;
+  const scope =
+    "activity heartrate location nutrition profile settings sleep social weight";
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: "code",
+    scope: scope,
+    redirect_uri: redirectUri,
+  });
+
+  window.location.href = `https://www.fitbit.com/oauth2/authorize?${params.toString()}`;
+};
+
+export const handleFitbitLogout = () => {
+  // TODO: Call your backend to revoke the Fitbit token and remove the connection status from the user's document
+  console.log("Revoking Fitbit token and clearing connection status...");
+};

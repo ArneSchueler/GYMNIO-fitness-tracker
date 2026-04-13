@@ -11,7 +11,7 @@ export const useSignup = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -24,28 +24,37 @@ export const useSignup = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
-      // User in Firebase Auth anlegen
-      const { user } = await createUserWithEmailAndPassword(
+      // 1. Account erstellen
+      const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password,
       );
 
-      // Anzeigename im Firebase-Profil speichern
-      await updateProfile(user, {
-        displayName: formData.name,
-      });
+      // 2. Profil mit dem vollen Namen ("Full Name") aktualisieren
+      if (userCredential.user) {
+        await updateProfile(userCredential.user, {
+          displayName: formData.name,
+        });
+      }
 
-      navigate("/"); // Ab zum Dashboard
+      // 3. Erst nach Erfolg navigieren
+      navigate("/");
     } catch (err: any) {
       setError(err.message || "Registration failed.");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  return { formData, setFormData, error, isLoading, handleSignup };
+  return {
+    formData,
+    setFormData,
+    error,
+    isLoading: isSubmitting,
+    handleSignup,
+  };
 };

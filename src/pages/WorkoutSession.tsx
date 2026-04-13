@@ -34,17 +34,26 @@ export default function WorkoutSession() {
   const workout = workoutPlans[currentWorkoutIndex];
 
   useEffect(() => {
+    let isMounted = true;
+
     const acquireWakeLock = async () => {
       if ("wakeLock" in navigator) {
         try {
-          wakeLock.current = await (navigator as any).wakeLock.request(
-            "screen",
-          );
-          if (wakeLock.current) {
-            wakeLock.current.onrelease = () => {
-              console.log("Wake Lock was released");
-            };
+          const lock = await (navigator as any).wakeLock.request("screen");
+
+          // If the component unmounted while the promise was resolving, release immediately
+          if (!isMounted) {
+            lock.release();
+            return;
           }
+
+          wakeLock.current = lock;
+          wakeLock.current.onrelease = () => {
+            console.log("Wake Lock was released");
+            if (wakeLock.current === lock) {
+              wakeLock.current = null;
+            }
+          };
         } catch (err: any) {
           // Fail silently. Wake lock is a nice-to-have, not essential.
         }
@@ -52,7 +61,7 @@ export default function WorkoutSession() {
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && !wakeLock.current) {
         acquireWakeLock();
       }
     };
@@ -61,8 +70,10 @@ export default function WorkoutSession() {
     acquireWakeLock(); // Acquire on initial load
 
     return () => {
+      isMounted = false;
       if (wakeLock.current) {
         wakeLock.current.release();
+        wakeLock.current = null;
       }
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
@@ -89,6 +100,13 @@ export default function WorkoutSession() {
     };
     fetchPreviousWorkout();
   }, [user, workout.id]);
+
+  // Reset timer on logout
+  useEffect(() => {
+    if (user === null) {
+      stopAndClear();
+    }
+  }, [user, stopAndClear]);
 
   const currentExercise = workout.exercises[currentExerciseIndex];
   // Calculate how many exercises in the *current phase* (e.g., warm-up, main, cool-down) of the current exercise
