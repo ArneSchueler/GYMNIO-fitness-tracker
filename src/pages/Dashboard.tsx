@@ -36,6 +36,8 @@ export default function Dashboard() {
     heartRate: { current: 0 },
     workoutTime: { current: 0, goal: 60 },
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -44,6 +46,7 @@ export default function Dashboard() {
     }
 
     const fetchDashboardData = async () => {
+      setIsLoading(true);
       try {
         // Fetching the user's synced Fitbit data from Firestore
         console.log(`🔍 Suche Daten für User: ${user.uid}...`);
@@ -58,6 +61,7 @@ export default function Dashboard() {
         if (!snap.empty) {
           const data = snap.docs[0].data();
           console.log("✅ Erfolgreich Daten empfangen:", data);
+          setIsConnected(true);
           setStats((prev) => ({
             ...prev,
             calories: {
@@ -83,10 +87,14 @@ export default function Dashboard() {
                 prev.workoutTime.goal,
             },
           }));
+        } else {
+          setIsConnected(false);
         }
       } catch (error) {
         console.error("❌ Kritischer Fehler beim Laden der Dashboard-Daten:");
         console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -104,9 +112,29 @@ export default function Dashboard() {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl text-sky-900">
             Welcome, {firstName}!
           </h1>
-          <p className="text-lg text-gray-500">
-            {currentDay}, {formattedDate}
-          </p>
+          <div className="flex flex-wrap items-center gap-3 mt-1">
+            <p className="text-lg text-gray-500">
+              {currentDay}, {formattedDate}
+            </p>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
+              {isLoading && !isConnected ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>{" "}
+                  Checking Connection...
+                </>
+              ) : isConnected ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>{" "}
+                  Fitbit Connected
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-slate-400"></span>{" "}
+                  Not Connected
+                </>
+              )}
+            </div>
+          </div>
         </div>
         <Link to="/workout">
           <Button size={"lg"}>Start Workout</Button>
@@ -120,6 +148,7 @@ export default function Dashboard() {
             goal={stats.calories.goal}
             type="progress"
             label="kcal today"
+            isLoading={isLoading}
           ></WidgetCard>
           <WidgetCard
             icon={<Footprints size={widgetIconSize} />}
@@ -127,12 +156,14 @@ export default function Dashboard() {
             goal={stats.steps.goal}
             label="steps"
             type="progress"
+            isLoading={isLoading}
           ></WidgetCard>
           <WidgetCard
             icon={<Activity size={widgetIconSize} />}
             data={stats.heartRate.current}
             type="heartrate"
             label="bmp"
+            isLoading={isLoading}
           ></WidgetCard>
           <WidgetCard
             icon={<Timer size={widgetIconSize} />}
@@ -140,6 +171,7 @@ export default function Dashboard() {
             goal={stats.workoutTime.goal}
             label="workout minutes"
             type="workout"
+            isLoading={isLoading}
           ></WidgetCard>
         </section>
         <section className="col-span-12 grid lg:grid-cols-12 gap-4 min-h-0">
