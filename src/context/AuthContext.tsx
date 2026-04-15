@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/firebase";
-import { onAuthStateChanged, User, signOut } from "firebase/auth"; // signOut importiert
+import { onAuthStateChanged, type User, signOut } from "firebase/auth"; // signOut importiert
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface AuthContextType {
