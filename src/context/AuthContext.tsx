@@ -1,7 +1,6 @@
-// src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, User, signOut } from "firebase/auth"; // signOut importiert
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface AuthContextType {
@@ -9,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   accessToken: string | null;
   setAccessToken: (token: string | null) => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +28,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return unsubscribe;
   }, []);
 
+  // Logout Funktion definieren
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setAccessToken(null);
+    } catch (err) {
+      console.error("Logout Fehler:", err);
+    }
+  };
+
   // GLOBALER BACKGROUND SYNC
   useEffect(() => {
     if (!user || !accessToken) return;
@@ -41,27 +51,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const data = await response.json();
           const today = new Date().toISOString().split("T")[0];
 
-          // Speichern in Firestore triggert automatisch das Dashboard via onSnapshot
+          // FIX: Wir mappen die Felder explizit
+          // Dadurch wird der access_token NICHT in Firestore gespeichert
+          const updateData: any = {
+            userId: user.uid,
+            date: today,
+            timestamp: serverTimestamp(),
+          };
+
+          // Nur existierende Werte übernehmen
+          if (data.heartRate !== undefined)
+            updateData.heartRate = Number(data.heartRate);
+          if (data.steps !== undefined) updateData.steps = Number(data.steps);
+          if (data.calories !== undefined)
+            updateData.calories = Number(data.calories);
+          if (data.workoutTime !== undefined)
+            updateData.workoutTime = Number(data.workoutTime);
+
           await setDoc(
             doc(db, "fitbit_daily_stats", `${user.uid}_${today}`),
-            {
-              userId: user.uid,
-              date: today,
-              ...data,
-              timestamp: serverTimestamp(),
-            },
+            updateData,
             { merge: true },
           );
-          console.log(`✅ Fitbit Sync (${type}) erfolgt.`);
+          console.log(`✅ Fitbit Sync (${type}) erfolgt:`, updateData);
         }
       } catch (err) {
         console.error("Fitbit Sync Fehler:", err);
       }
     };
 
-    // Herzfrequenz alle 30 Sekunden (Wunsch)
-    const hrInterval = setInterval(() => syncFitbit("heartrate"), 300000);
-    // Stats alle 5 Minuten (schont API Limit)
+    // FIX: Herzfrequenz alle 30 Sekunden (30.000ms statt 300.000ms)
+    const hrInterval = setInterval(() => syncFitbit("heartrate"), 30000);
+    // Stats alle 5 Minuten (300.000ms)
     const statsInterval = setInterval(() => syncFitbit("stats"), 300000);
 
     return () => {
@@ -72,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, accessToken, setAccessToken }}
+      value={{ user, loading, accessToken, setAccessToken, logout }}
     >
       {children}
     </AuthContext.Provider>
