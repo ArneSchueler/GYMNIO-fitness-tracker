@@ -13,7 +13,7 @@ import {
   where,
   orderBy,
   limit,
-  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
 
 export default function Dashboard() {
@@ -40,69 +40,35 @@ export default function Dashboard() {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      console.log("❌ Dashboard: Kein User eingeloggt.");
-      return;
-    }
+    if (!user) return;
 
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetching the user's synced Fitbit data from Firestore
-        console.log(`🔍 Suche Daten für User: ${user.uid}...`);
-        const q = query(
-          collection(db, "fitbit_daily_stats"),
-          where("userId", "==", user.uid),
-          orderBy("date", "desc"),
-          limit(1),
-        );
+    const q = query(
+      collection(db, "fitbit_daily_stats"),
+      where("userId", "==", user.uid),
+      orderBy("date", "desc"),
+      limit(1),
+    );
 
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          const data = snap.docs[0].data();
-          console.log("✅ Erfolgreich Daten empfangen:", data);
-          setIsConnected(true);
-          setStats((prev) => ({
-            ...prev,
-            calories: {
-              // Number() wandelt den String "1500" sicher in die Zahl 1500 um
-              current: Number(data.calories) || 0,
-              goal:
-                Number(data.caloriesGoal || data.goals?.calories) ||
-                prev.calories.goal,
-            },
-            steps: {
-              current: Number(data.steps) || 0,
-              goal:
-                Number(data.stepsGoal || data.goals?.steps) || prev.steps.goal,
-            },
-            heartRate: {
-              // Hier nutzen wir auch den Fallback für Kleinschreibung, nur zur Sicherheit
-              current: Number(data.heartRate || data.heartrate) || 0,
-            },
-            workoutTime: {
-              current: Number(data.workoutTime || data.activeMinutes) || 0,
-              goal:
-                Number(data.workoutTimeGoal || data.goals?.activeMinutes) ||
-                prev.workoutTime.goal,
-            },
-          }));
-        } else {
-          setIsConnected(false);
-        }
-      } catch (error) {
-        console.error("❌ Kritischer Fehler beim Laden der Dashboard-Daten:");
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setIsLoading(false);
+    // Echtzeit-Listener
+    const unsubscribe = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        const data = snap.docs[0].data();
+        setStats((prev) => ({
+          ...prev,
+          calories: { ...prev.calories, current: Number(data.calories) || 0 },
+          steps: { ...prev.steps, current: Number(data.steps) || 0 },
+          heartRate: { current: Number(data.heartRate || data.heartrate) || 0 },
+          workoutTime: {
+            ...prev.workoutTime,
+            current: Number(data.workoutTime) || 0,
+          },
+        }));
+        setIsConnected(true);
       }
-    };
+      setIsLoading(false);
+    });
 
-    fetchDashboardData();
-
-    const intervalId = setInterval(fetchDashboardData, 2 * 60 * 1000);
-
-    return () => clearInterval(intervalId);
+    return () => unsubscribe();
   }, [user]);
 
   return (

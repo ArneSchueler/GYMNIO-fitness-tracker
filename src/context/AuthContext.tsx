@@ -1,59 +1,86 @@
 // src/context/AuthContext.tsx
-import { createContext, useContext, useEffect, useState } from "react";
-import { signOut, onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "../firebase"; // Importiere deine Auth-Instanz
-import { useNavigate } from "react-router-dom";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { auth, db } from "@/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  logout: () => Promise<void>; // Logout-Funktion im Interface ergänzen
+  accessToken: string | null;
+  setAccessToken: (token: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  const logout = async () => {
-    try {
-      console.log("Logout gestartet..."); // Debugging-Hilfe
-      await signOut(auth);
-      // Firebase onAuthStateChanged triggert automatisch und setzt user auf null
-      console.log("Firebase erfolgreich abgemeldet");
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error("Fehler beim Abmelden:", error);
-    }
-  };
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Überwacht den Login-Status (Firebase-Magie)
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       setLoading(false);
     });
-
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
+  // GLOBALER BACKGROUND SYNC
+  useEffect(() => {
+    if (!user || !accessToken) return;
+
+    const syncFitbit = async (type: "heartrate" | "stats") => {
+      try {
+        const response = await fetch(
+          `/api/fitbit-sync?access_token=${accessToken}&type=${type}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const today = new Date().toISOString().split("T")[0];
+
+          // Speichern in Firestore triggert automatisch das Dashboard via onSnapshot
+          await setDoc(
+            doc(db, "fitbit_daily_stats", `${user.uid}_${today}`),
+            {
+              userId: user.uid,
+              date: today,
+              ...data,
+              timestamp: serverTimestamp(),
+            },
+            { merge: true },
+          );
+          console.log(`✅ Fitbit Sync (${type}) erfolgt.`);
+        }
+      } catch (err) {
+        console.error("Fitbit Sync Fehler:", err);
+      }
+    };
+
+    // Herzfrequenz alle 30 Sekunden (Wunsch)
+    const hrInterval = setInterval(() => syncFitbit("heartrate"), 300000);
+    // Stats alle 5 Minuten (schont API Limit)
+    const statsInterval = setInterval(() => syncFitbit("stats"), 300000);
+
+    return () => {
+      clearInterval(hrInterval);
+      clearInterval(statsInterval);
+    };
+  }, [user, accessToken]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
-      {" "}
-      {!loading && children}
+    <AuthContext.Provider
+      value={{ user, loading, accessToken, setAccessToken }}
+    >
+      {children}
     </AuthContext.Provider>
   );
 };
 
-// Eigener Hook für einfacheren Zugriff
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error(
-      "useAuth muss innerhalb eines AuthProviders verwendet werden",
-    );
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
