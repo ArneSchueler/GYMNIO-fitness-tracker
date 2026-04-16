@@ -1,7 +1,7 @@
 import WorkoutCard from "@/components/workout/WorkoutCard";
 import { useState, useEffect, useRef } from "react";
 import { useWorkoutSessionTimer } from "@/hooks/useWorkoutSessionTimer";
-import { workoutPlans } from "@/components/workout/workouts";
+import { workoutPlans } from "@/data/workouts";
 import { db } from "@/firebase";
 import {
   collection,
