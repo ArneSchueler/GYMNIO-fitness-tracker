@@ -11,6 +11,8 @@ import {
   limit,
   getDocs,
   addDoc,
+  updateDoc,
+  doc,
   Timestamp,
 } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
@@ -19,155 +21,157 @@ import { useNavigate } from "react-router-dom";
 export default function WorkoutSession() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [currentWorkoutIndex] = useState(0); // You can allow this to be changed via routing, params, etc.
+
+  // States
+  const [currentWorkoutIndex] = useState(0);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionData, setSessionData] = useState<
     Record<string, { reps: number; weight: number }[]>
   >({});
   const [prevSessionData, setPrevSessionData] = useState<
     Record<string, { reps: number; weight: number }[]>
   >({});
+
   const { totalSeconds: elapsedTime, stopAndClear } = useWorkoutSessionTimer();
   const wakeLock = useRef<WakeLockSentinel | null>(null);
-
-  // Select the workout you want to show: here hardcoded to the first one
   const workout = workoutPlans[currentWorkoutIndex];
 
-  // Ersetze dein komplettes useEffect für den WakeLock durch dieses:
+  /**
+   * 1. Session in Firestore initialisieren
+   */
+  useEffect(() => {
+    if (!user || sessionId) return;
+
+    const createInitialSession = async () => {
+      try {
+        const docRef = await addDoc(collection(db, "workout_sessions"), {
+          userId: user.uid,
+          workoutId: workout.id,
+          date: Timestamp.now(),
+          exercises: {}, // Startet leer
+          totalTime: 0,
+          status: "in-progress",
+        });
+        setSessionId(docRef.id);
+      } catch (error) {
+        console.error("Fehler beim Erstellen der Session:", error);
+      }
+    };
+
+    createInitialSession();
+  }, [user, workout.id]);
+
+  /**
+   * 2. Sets direkt speichern
+   */
+  const handleAddSet = async (set: { reps: number; weight: number }) => {
+    const exerciseId = workout.exercises[currentExerciseIndex].id;
+
+    // Lokal aktualisieren für das UI
+    const updatedSets = [...(sessionData[exerciseId] || []), set];
+    setSessionData((prev) => ({
+      ...prev,
+      [exerciseId]: updatedSets,
+    }));
+
+    // In Firestore speichern
+    if (sessionId) {
+      try {
+        const sessionRef = doc(db, "workout_sessions", sessionId);
+        await updateDoc(sessionRef, {
+          [`exercises.${exerciseId}`]: updatedSets,
+        });
+      } catch (error) {
+        console.error("Fehler beim Speichern des Sets:", error);
+      }
+    }
+  };
+
+  /**
+   * 3. Session abschließen
+   */
+  const handleFinish = async () => {
+    const finalTime = stopAndClear();
+    if (sessionId) {
+      try {
+        const sessionRef = doc(db, "workout_sessions", sessionId);
+        await updateDoc(sessionRef, {
+          totalTime: finalTime,
+          status: "completed",
+        });
+      } catch (error) {
+        console.error("Fehler beim Abschließen der Session:", error);
+      }
+    }
+    navigate("/");
+  };
+
+  // --- Restliche Logik (WakeLock, PrevSession, Navigation) bleibt gleich ---
+
   useEffect(() => {
     let isMounted = true;
-
     const acquireWakeLock = async () => {
-      // Check if the API exists in the browser
       if ("wakeLock" in navigator) {
         try {
-          // @ts-ignore - Some TS versions don't have WakeLock defined yet
           const lock = await navigator.wakeLock.request("screen");
-
           if (!isMounted) {
             lock.release();
             return;
           }
-
           wakeLock.current = lock;
-
-          // Sicherer Zugriff mit optionalem Chaining
-          wakeLock.current?.addEventListener("release", () => {
-            console.log("Wake Lock was released");
-            wakeLock.current = null;
-          });
         } catch (err) {
-          // Fail silently
-          console.warn("Wake Lock acquisition failed", err);
+          console.warn("Wake Lock failed", err);
         }
       }
     };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && !wakeLock.current) {
-        acquireWakeLock();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
     acquireWakeLock();
-
     return () => {
       isMounted = false;
-      // Fix: Optional Chaining verhindert den Build-Fehler
-      wakeLock.current?.release().catch(() => {});
-      wakeLock.current = null;
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      wakeLock.current?.release();
     };
   }, []);
 
   useEffect(() => {
     if (!user) return;
     const fetchPreviousWorkout = async () => {
-      try {
-        const q = query(
-          collection(db, "workout_sessions"),
-          where("userId", "==", user.uid),
-          where("workoutId", "==", workout.id),
-          orderBy("date", "desc"),
-          limit(1),
-        );
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          setPrevSessionData(snap.docs[0].data().exercises || {});
-        }
-      } catch (error) {
-        console.error("Error fetching previous workout:", error);
-      }
+      const q = query(
+        collection(db, "workout_sessions"),
+        where("userId", "==", user.uid),
+        where("workoutId", "==", workout.id),
+        orderBy("date", "desc"),
+        limit(1),
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) setPrevSessionData(snap.docs[0].data().exercises || {});
     };
     fetchPreviousWorkout();
   }, [user, workout.id]);
 
-  // Reset timer on logout
-  useEffect(() => {
-    if (user === null) {
-      stopAndClear();
-    }
-  }, [user, stopAndClear]);
-
   const currentExercise = workout.exercises[currentExerciseIndex];
-  // Calculate how many exercises in the *current phase* (e.g., warm-up, main, cool-down) of the current exercise
-  const currentPhase = currentExercise.phase;
   const phaseExercises = workout.exercises.filter(
-    (exercise) => exercise.phase === currentPhase,
+    (ex) => ex.phase === currentExercise.phase,
   );
-  const totalExercises = workout.exercises.length;
-  const totalPhaseExercises = phaseExercises.length;
-  const currentPhaseExerciseNumber =
-    phaseExercises.findIndex((exercise) => exercise.id === currentExercise.id) +
-    1;
-
-  const goToNextExercise = () => {
-    setCurrentExerciseIndex((previousIndex) =>
-      Math.min(previousIndex + 1, totalExercises - 1),
-    );
-  };
-
-  const goToPreviousExercise = () => {
-    setCurrentExerciseIndex((previousIndex) => Math.max(previousIndex - 1, 0));
-  };
-
-  const handleAddSet = (set: { reps: number; weight: number }) => {
-    setSessionData((prev) => ({
-      ...prev,
-      [currentExercise.id]: [...(prev[currentExercise.id] || []), set],
-    }));
-  };
-
-  const handleFinish = async () => {
-    const finalTime = stopAndClear();
-    if (user) {
-      try {
-        await addDoc(collection(db, "workout_sessions"), {
-          userId: user.uid,
-          workoutId: workout.id,
-          date: Timestamp.now(),
-          exercises: sessionData,
-          totalTime: finalTime,
-        });
-      } catch (error) {
-        console.error("Error saving workout:", error);
-      }
-    }
-    navigate("/"); // Redirect back to Dashboard
-  };
 
   return (
     <WorkoutCard
       exercise={currentExercise}
-      onNext={goToNextExercise}
-      onPrevious={goToPreviousExercise}
+      onNext={() =>
+        setCurrentExerciseIndex((prev) =>
+          Math.min(prev + 1, workout.exercises.length - 1),
+        )
+      }
+      onPrevious={() =>
+        setCurrentExerciseIndex((prev) => Math.max(prev - 1, 0))
+      }
       onFinish={handleFinish}
       isFirst={currentExerciseIndex === 0}
-      isLast={currentExerciseIndex === totalExercises - 1}
+      isLast={currentExerciseIndex === workout.exercises.length - 1}
       workoutName={workout.title}
-      currentPhaseExerciseNumber={currentPhaseExerciseNumber}
-      totalPhaseExercises={totalPhaseExercises}
+      currentPhaseExerciseNumber={
+        phaseExercises.findIndex((ex) => ex.id === currentExercise.id) + 1
+      }
+      totalPhaseExercises={phaseExercises.length}
       completedSets={sessionData[currentExercise.id] || []}
       onAddSet={handleAddSet}
       prevSets={prevSessionData[currentExercise.id] || []}

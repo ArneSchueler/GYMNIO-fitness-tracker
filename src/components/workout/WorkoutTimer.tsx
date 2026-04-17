@@ -60,7 +60,7 @@ export default function WorkoutTimer({ duration }: WorkoutTimerProps) {
         playTone(880, 0.1);
         lastBeepSecond.current = currentMillis;
       } else if (currentMillis === 0) {
-        playTone(440, 0.8);
+        playTone(800, 1.2);
         lastBeepSecond.current = 0;
       }
     }
