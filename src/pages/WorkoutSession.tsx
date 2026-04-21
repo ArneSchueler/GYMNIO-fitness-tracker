@@ -16,14 +16,14 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function WorkoutSession() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   // States
-  const [currentWorkoutIndex] = useState(0);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionData, setSessionData] = useState<
@@ -35,7 +35,7 @@ export default function WorkoutSession() {
 
   const { totalSeconds: elapsedTime, stopAndClear } = useWorkoutSessionTimer();
   const wakeLock = useRef<WakeLockSentinel | null>(null);
-  const workout = workoutPlans[currentWorkoutIndex];
+  const workout = workoutPlans.find((w) => w.id === id) || workoutPlans[0];
 
   /**
    * 1. Session in Firestore initialisieren

@@ -21,7 +21,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/workout" element={<WorkoutSession />} />
+          <Route path="/workout/:id" element={<WorkoutSession />} />
           <Route path="/statistics" element={<RecipeCatalog />} />
           <Route path="/exercises" element={<ExerciseLibrary />} />
           <Route path="/recipes" element={<RecipeCatalog />} />

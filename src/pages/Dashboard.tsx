@@ -6,6 +6,15 @@ import WidgetCard from "@/components/ui/WidgetCard";
 import { Activity, Flame, Footprints, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogOverlay,
+} from "@/components/ui/dialog";
+import { workoutPlans } from "@/data/workouts";
 import { db } from "@/firebase";
 import {
   collection,
@@ -14,6 +23,7 @@ import {
   orderBy,
   limit,
   onSnapshot,
+  getDocs,
 } from "firebase/firestore";
 
 export default function Dashboard() {
@@ -38,6 +48,9 @@ export default function Dashboard() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
+  const [lastUsedWorkoutId, setLastUsedWorkoutId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -71,6 +84,24 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [user]);
 
+  // Fetch the last used workout session
+  useEffect(() => {
+    if (!user) return;
+    const fetchLastWorkout = async () => {
+      const q = query(
+        collection(db, "workout_sessions"),
+        where("userId", "==", user.uid),
+        orderBy("date", "desc"),
+        limit(1),
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setLastUsedWorkoutId(snap.docs[0].data().workoutId);
+      }
+    };
+    fetchLastWorkout();
+  }, [user]);
+
   return (
     <div className="p-4 sm:p-6 lg:p-6 h-full gap-6 flex flex-col min-h-0 text-2xl font-bold">
       <header className="flex justify-between items-center ">
@@ -102,9 +133,62 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <Link to="/workout">
-          <Button size={"lg"}>Start Workout</Button>
-        </Link>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button size={"lg"}>Start Workout</Button>
+          </DialogTrigger>
+          <DialogOverlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+          <DialogContent className="fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white dark:bg-slate-950 p-6 shadow-lg sm:max-w-[425px] sm:rounded-xl border border-gray-200 dark:border-slate-800">
+            <DialogHeader>
+              <DialogTitle>Select a Workout</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 mt-2">
+              {workoutPlans.map((plan) => (
+                <Link
+                  key={plan.id}
+                  to={`/workout/${plan.id}`}
+                  className="w-full"
+                >
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between h-auto py-3 px-4 flex items-center gap-2"
+                  >
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="font-semibold text-base whitespace-normal text-left leading-tight text-sky-900 dark:text-sky-100">
+                        {plan.title}
+                      </span>
+                      <span className="text-xs text-gray-500 font-normal">
+                        {plan.exercises.length} Exercises
+                      </span>
+                    </div>
+                    {lastUsedWorkoutId === plan.id && (
+                      <span className="text-[10px] font-medium bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full dark:bg-sky-900 dark:text-sky-100 whitespace-nowrap shrink-0">
+                        Last Used
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+              ))}
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200 dark:border-gray-800" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white dark:bg-slate-950 px-2 text-gray-500">
+                    Or
+                  </span>
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                className="w-full font-semibold"
+                onClick={() => alert("Create functionality coming soon!")}
+              >
+                + Create New Workout
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </header>
       <main className="grid lg:grid-cols-12 grid-rows-[auto_minmax(250px,1fr)_minmax(250px,1fr)] lg:grid-rows-[auto_minmax(180px,1fr)_minmax(180px,1fr)] gap-4 flex-1 min-h-0">
         <section className="col-span-12 grid lg:grid-cols-12 gap-4">
