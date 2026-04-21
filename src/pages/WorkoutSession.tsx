@@ -1,7 +1,7 @@
 import WorkoutCard from "@/components/workout/WorkoutCard";
 import { useState, useEffect, useRef } from "react";
 import { useWorkoutSessionTimer } from "@/hooks/useWorkoutSessionTimer";
-import { workoutPlans } from "@/data/workouts";
+import { workoutPlans, type WorkoutPlan } from "@/data/workouts";
 import { db } from "@/firebase";
 import {
   collection,
@@ -10,6 +10,7 @@ import {
   orderBy,
   limit,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   doc,
@@ -35,13 +36,33 @@ export default function WorkoutSession() {
 
   const { totalSeconds: elapsedTime, stopAndClear } = useWorkoutSessionTimer();
   const wakeLock = useRef<WakeLockSentinel | null>(null);
-  const workout = workoutPlans.find((w) => w.id === id) || workoutPlans[0];
+  const [workout, setWorkout] = useState<WorkoutPlan | null>(
+    workoutPlans.find((w) => w.id === id) || null,
+  );
+
+  useEffect(() => {
+    if (workout || !id) return;
+    const fetchCustomWorkout = async () => {
+      try {
+        const docRef = doc(db, "workouts", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setWorkout({ id: docSnap.id, ...docSnap.data() } as WorkoutPlan);
+        } else {
+          setWorkout(workoutPlans[0]);
+        }
+      } catch (error) {
+        setWorkout(workoutPlans[0]);
+      }
+    };
+    fetchCustomWorkout();
+  }, [id, workout]);
 
   /**
    * 1. Session in Firestore initialisieren
    */
   useEffect(() => {
-    if (!user || sessionId) return;
+    if (!user || sessionId || !workout) return;
 
     const createInitialSession = async () => {
       try {
@@ -60,12 +81,13 @@ export default function WorkoutSession() {
     };
 
     createInitialSession();
-  }, [user, workout.id]);
+  }, [user, workout?.id]);
 
   /**
    * 2. Sets direkt speichern
    */
   const handleAddSet = async (set: { reps: number; weight: number }) => {
+    if (!workout) return;
     const exerciseId = workout.exercises[currentExerciseIndex].id;
 
     // Lokal aktualisieren für das UI
@@ -133,7 +155,7 @@ export default function WorkoutSession() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !workout) return;
     const fetchPreviousWorkout = async () => {
       const q = query(
         collection(db, "workout_sessions"),
@@ -146,7 +168,15 @@ export default function WorkoutSession() {
       if (!snap.empty) setPrevSessionData(snap.docs[0].data().exercises || {});
     };
     fetchPreviousWorkout();
-  }, [user, workout.id]);
+  }, [user, workout?.id]);
+
+  if (!workout) {
+    return (
+      <div className="flex h-full items-center justify-center text-xl font-medium">
+        Loading workout...
+      </div>
+    );
+  }
 
   const currentExercise = workout.exercises[currentExerciseIndex];
   const phaseExercises = workout.exercises.filter(

@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { workoutPlans, type WorkoutPlan, type Exercise } from "@/data/workouts";
 import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
+import {
   Card,
   CardContent,
   CardFooter,
@@ -17,7 +23,7 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { MoreVertical, X } from "lucide-react";
+import { MoreVertical, X, GripVertical } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/firebase";
@@ -28,12 +34,33 @@ import {
   orderBy,
   limit,
   getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
 } from "firebase/firestore";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function ExerciseLibrary() {
   const { user } = useAuth();
   const [workouts, setWorkouts] = useState<WorkoutPlan[]>(workoutPlans);
   const [lastSessions, setLastSessions] = useState<Record<string, any>>({});
+
+  // Create Workout state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [warmupExercises, setWarmupExercises] = useState<string[]>([]);
+  const [mainExercises, setMainExercises] = useState<string[]>([]);
+  const [cooldownExercises, setCooldownExercises] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // State for dialog search/filter
+  const [dialogSearchTerm, setDialogSearchTerm] = useState("");
+  const [dialogMuscleFilters, setDialogMuscleFilters] = useState<string[]>([]);
 
   // Search and Filter state for Exercise Database
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,7 +85,7 @@ export default function ExerciseLibrary() {
   const allMuscleGroups = useMemo(() => {
     const groups = new Set<string>();
     allExercises.forEach((ex) => {
-      ex.muscleGroups.forEach((mg) => groups.add(mg));
+      ex.muscleGroups?.forEach((mg) => groups.add(mg));
     });
     return Array.from(groups).sort();
   }, [allExercises]);
@@ -68,15 +95,32 @@ export default function ExerciseLibrary() {
     return allExercises.filter((ex) => {
       const matchesSearch =
         ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ex.muscleGroups.some((mg) =>
+        (ex.muscleGroups || []).some((mg) =>
           mg.toLowerCase().includes(searchTerm.toLowerCase()),
         );
       const matchesMuscle =
         muscleFilters.length === 0 ||
-        muscleFilters.some((filter) => ex.muscleGroups.includes(filter));
+        muscleFilters.some((filter) =>
+          (ex.muscleGroups || []).includes(filter),
+        );
       return matchesSearch && matchesMuscle;
     });
   }, [allExercises, searchTerm, muscleFilters]);
+
+  // Filter exercises for the create/edit dialog
+  const filteredDialogExercises = useMemo(() => {
+    return allExercises.filter((ex) => {
+      const nameMatch = ex.name
+        .toLowerCase()
+        .includes(dialogSearchTerm.toLowerCase());
+      const muscleMatch =
+        dialogMuscleFilters.length === 0 ||
+        dialogMuscleFilters.some((filter) =>
+          (ex.muscleGroups || []).includes(filter),
+        );
+      return nameMatch && muscleMatch;
+    });
+  }, [allExercises, dialogSearchTerm, dialogMuscleFilters]);
 
   // Pagination state for Exercise Database
   const [currentPage, setCurrentPage] = useState(1);
@@ -114,8 +158,46 @@ export default function ExerciseLibrary() {
     fetchLastSessions();
   }, [user, workouts]);
 
-  const handleDelete = (id: string) => {
-    // In a real app, you would delete this from your backend/database as well
+  // Fetch custom workouts from database
+  useEffect(() => {
+    if (!user) return;
+    const fetchCustomWorkouts = async () => {
+      try {
+        const q = query(
+          collection(db, "workouts"),
+          where("userId", "==", user.uid),
+        );
+        const snap = await getDocs(q);
+        const customWorkouts = snap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as WorkoutPlan[];
+
+        setWorkouts((prev) => {
+          const existingIds = new Set(prev.map((w) => w.id));
+          const newWorkouts = customWorkouts.filter(
+            (w) => !existingIds.has(w.id),
+          );
+          return [...prev, ...newWorkouts];
+        });
+      } catch (error) {
+        console.error("Error fetching custom workouts:", error);
+      }
+    };
+    fetchCustomWorkouts();
+  }, [user]);
+
+  const handleDelete = async (id: string) => {
+    const isDefault = workoutPlans.some((w) => w.id === id);
+    if (!isDefault) {
+      try {
+        await deleteDoc(doc(db, "workouts", id));
+      } catch (error) {
+        console.error("Error deleting workout:", error);
+        alert("Failed to delete from database.");
+        return; // Stop if db delete fails
+      }
+    }
     setWorkouts((prev) => prev.filter((w) => w.id !== id));
   };
 
@@ -126,16 +208,106 @@ export default function ExerciseLibrary() {
   };
 
   const handleCreate = () => {
-    // Placeholder: wire this up to open a create modal or navigate to a builder page
-    console.log("Create new workout");
-    alert("Create functionality coming soon!");
+    // Reset state when opening
+    setNewTitle("");
+    setWarmupExercises([]);
+    setMainExercises([]);
+    setCooldownExercises([]);
+    setDialogSearchTerm("");
+    setDialogMuscleFilters([]);
+    setIsCreateOpen(true);
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    const { source, destination } = result;
+    if (!destination) return;
+
+    const getList = (id: string) => {
+      if (id === "warmup") return warmupExercises;
+      if (id === "main") return mainExercises;
+      if (id === "cooldown") return cooldownExercises;
+      return [];
+    };
+    const setList = (id: string, list: string[]) => {
+      if (id === "warmup") setWarmupExercises(list);
+      if (id === "main") setMainExercises(list);
+      if (id === "cooldown") setCooldownExercises(list);
+    };
+
+    const sourceList = Array.from(getList(source.droppableId));
+    const destList = Array.from(getList(destination.droppableId));
+
+    if (source.droppableId === destination.droppableId) {
+      const [reorderedItem] = sourceList.splice(source.index, 1);
+      sourceList.splice(destination.index, 0, reorderedItem);
+      setList(source.droppableId, sourceList);
+    } else {
+      const [movedItem] = sourceList.splice(source.index, 1);
+      destList.splice(destination.index, 0, movedItem);
+      setList(source.droppableId, sourceList);
+      setList(destination.droppableId, destList);
+    }
+  };
+
+  const handleSaveNewWorkout = async () => {
+    if (!newTitle.trim()) return alert("Please enter a workout title.");
+    if (
+      warmupExercises.length === 0 &&
+      mainExercises.length === 0 &&
+      cooldownExercises.length === 0
+    )
+      return alert("Please select at least one exercise.");
+    if (!user) return alert("You must be logged in to create a workout.");
+
+    setIsSaving(true);
+    try {
+      const exercisesToSave = [
+        ...warmupExercises.map((id) => ({
+          ...allExercises.find((e) => e.id === id),
+          phase: "warmup",
+        })),
+        ...mainExercises.map((id) => ({
+          ...allExercises.find((e) => e.id === id),
+          phase: "main",
+        })),
+        ...cooldownExercises.map((id) => ({
+          ...allExercises.find((e) => e.id === id),
+          phase: "cooldown",
+        })),
+      ];
+
+      const newWorkout = {
+        title: newTitle.trim(),
+        exercises: exercisesToSave,
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+      };
+
+      const docRef = await addDoc(collection(db, "workouts"), newWorkout);
+      const savedWorkout = {
+        ...newWorkout,
+        id: docRef.id,
+      } as unknown as WorkoutPlan;
+
+      setWorkouts((prev) => [...prev, savedWorkout]);
+      setIsCreateOpen(false);
+      setNewTitle("");
+      setWarmupExercises([]);
+      setMainExercises([]);
+      setCooldownExercises([]);
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      alert("Failed to save workout. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Helper to extract all unique muscle groups targeted in a workout
   const getUniqueMuscleGroups = (plan: WorkoutPlan) => {
     const groups = new Set<string>();
     plan.exercises.forEach((ex) => {
-      ex.muscleGroups.forEach((mg) => groups.add(mg));
+      ex.muscleGroups?.forEach((mg) => groups.add(mg));
     });
     return Array.from(groups);
   };
@@ -162,6 +334,14 @@ export default function ExerciseLibrary() {
     }
     return `${ex.reps || "-"} ${ex.weight ? `• ${ex.weight}` : ""}`;
   };
+
+  const isExerciseSelected = (id: string) =>
+    warmupExercises.includes(id) ||
+    mainExercises.includes(id) ||
+    cooldownExercises.includes(id);
+
+  const totalSelected =
+    warmupExercises.length + mainExercises.length + cooldownExercises.length;
 
   return (
     <div className="p-8 max-w-7xl mx-auto text-gray-800">
@@ -388,7 +568,7 @@ export default function ExerciseLibrary() {
                     {ex.name}
                   </CardTitle>
                   <div className="flex flex-wrap gap-1">
-                    {ex.muscleGroups.map((mg) => (
+                    {ex.muscleGroups?.map((mg) => (
                       <Badge key={mg} variant="secondary">
                         {mg}
                       </Badge>
@@ -397,9 +577,9 @@ export default function ExerciseLibrary() {
                 </div>
               </CardHeader>
               <CardContent className="flex-grow pt-0">
-                {ex.notes && (
+                {(ex.description || ex.notes) && (
                   <p className="text-sm text-gray-600 line-clamp-3">
-                    {ex.notes}
+                    {ex.description || ex.notes}
                   </p>
                 )}
               </CardContent>
@@ -441,6 +621,255 @@ export default function ExerciseLibrary() {
           </div>
         )}
       </div>
+
+      {/* Create New Workout Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-5xl h-[calc(100vh-8rem)] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Create New Workout</DialogTitle>
+          </DialogHeader>
+          <div className="grid md:grid-cols-2 gap-8 pt-4 flex-1 overflow-hidden">
+            {/* Left Column: Builder */}
+            <div className="flex flex-col h-full overflow-hidden">
+              <div className="space-y-2 mb-4">
+                <label className="text-sm font-medium">Workout Title</label>
+                <Input
+                  placeholder="e.g., Upper Body Power"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+              </div>
+              <label className="text-sm font-medium mb-2">
+                Selected Exercises ({totalSelected})
+              </label>
+              <div className="flex-grow border rounded-md bg-gray-50/50 dark:bg-slate-900/50 overflow-y-auto p-3 space-y-6">
+                <DragDropContext onDragEnd={onDragEnd}>
+                  {[
+                    { id: "warmup", title: "Warmup", items: warmupExercises },
+                    {
+                      id: "main",
+                      title: "Main Exercises",
+                      items: mainExercises,
+                    },
+                    {
+                      id: "cooldown",
+                      title: "Cooldown",
+                      items: cooldownExercises,
+                    },
+                  ].map((phase) => (
+                    <div key={phase.id}>
+                      <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2 pl-1">
+                        {phase.title}
+                      </h3>
+                      <Droppable droppableId={phase.id}>
+                        {(provided, snapshot) => (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className={`space-y-2 min-h-[60px] p-2 rounded-md transition-colors ${
+                              snapshot.isDraggingOver
+                                ? "bg-sky-50 dark:bg-sky-900/20 outline outline-1 outline-sky-200"
+                                : "bg-white dark:bg-slate-800/50"
+                            }`}
+                          >
+                            {phase.items.length === 0 && (
+                              <div className="text-center text-gray-400 py-3 text-xs italic">
+                                Drop exercises here
+                              </div>
+                            )}
+                            {phase.items.map((exerciseId, index) => {
+                              const exercise = allExercises.find(
+                                (ex) => ex.id === exerciseId,
+                              );
+                              if (!exercise) return null;
+                              return (
+                                <Draggable
+                                  key={exercise.id}
+                                  draggableId={exercise.id}
+                                  index={index}
+                                >
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={`flex items-center bg-white dark:bg-slate-800 p-2 rounded-md border ${
+                                        snapshot.isDragging
+                                          ? "shadow-lg border-sky-300 ring-1 ring-sky-300"
+                                          : "shadow-sm border-gray-200"
+                                      }`}
+                                    >
+                                      <GripVertical className="h-5 w-5 text-gray-400 mr-2 shrink-0 hover:text-gray-600 transition-colors" />
+                                      <span className="flex-grow font-medium text-sm truncate">
+                                        {exercise.name}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0 shrink-0 text-gray-400 hover:text-red-500 transition-colors"
+                                        onClick={() => {
+                                          setWarmupExercises((prev) =>
+                                            prev.filter(
+                                              (id) => id !== exercise.id,
+                                            ),
+                                          );
+                                          setMainExercises((prev) =>
+                                            prev.filter(
+                                              (id) => id !== exercise.id,
+                                            ),
+                                          );
+                                          setCooldownExercises((prev) =>
+                                            prev.filter(
+                                              (id) => id !== exercise.id,
+                                            ),
+                                          );
+                                        }}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </Draggable>
+                              );
+                            })}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </div>
+                  ))}
+                </DragDropContext>
+              </div>
+              <div className="flex justify-end gap-3 mt-4 pt-4 border-t shrink-0">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveNewWorkout} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Workout"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Column: Exercise List */}
+            <div className="flex flex-col h-full overflow-hidden">
+              <div className="flex gap-2 mb-4 shrink-0">
+                <Input
+                  placeholder="Search exercises..."
+                  value={dialogSearchTerm}
+                  onChange={(e) => setDialogSearchTerm(e.target.value)}
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="shrink-0">
+                      Muscles
+                      {dialogMuscleFilters.length > 0 &&
+                        ` (${dialogMuscleFilters.length})`}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[220px]">
+                    <div className="max-h-[200px] overflow-y-auto">
+                      {allMuscleGroups.map((group) => (
+                        <DropdownMenuCheckboxItem
+                          key={group}
+                          checked={dialogMuscleFilters.includes(group)}
+                          onCheckedChange={(checked) => {
+                            setDialogMuscleFilters((prev) =>
+                              checked
+                                ? [...prev, group]
+                                : prev.filter((g) => g !== group),
+                            );
+                          }}
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          {group.charAt(0).toUpperCase() + group.slice(1)}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div
+                className="flex-1 min-h-0 overflow-y-auto pr-2"
+                style={{
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "#0a2647 transparent",
+
+                  background: "transparent",
+                }}
+              >
+                <style>
+                  {`
+                    .custom-scrollbar::-webkit-scrollbar {
+                      width: 8px;
+                      background: transparent;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb {
+                      background: rgba(30, 144, 255, 0.5);
+                      border-radius: 8px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-track {
+                      background: transparent;
+                    }
+                  `}
+                </style>
+                {/* Add 'custom-scrollbar' to use custom styles */}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
+                  {filteredDialogExercises.map((ex) => {
+                    const isSelected = isExerciseSelected(ex.id);
+                    return (
+                      <Card
+                        key={ex.id}
+                        className={`flex flex-col p-3 transition-all duration-200 border ${
+                          isSelected
+                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/10 shadow-sm"
+                            : "border-gray-200 hover:border-sky-300 hover:shadow-md"
+                        }`}
+                      >
+                        <div className="flex items-center flex-wrap gap-2 mb-3">
+                          <p className="font-semibold text-sm leading-tight">
+                            {ex.name}
+                          </p>
+                          {ex.muscleGroups?.map((mg) => (
+                            <Badge
+                              key={mg}
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0"
+                            >
+                              {mg}
+                            </Badge>
+                          ))}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={isSelected ? "secondary" : "outline"}
+                          className={`w-full mt-auto shrink-0 transition-all ${isSelected ? "opacity-70 cursor-not-allowed" : "hover:bg-sky-50 hover:text-sky-700"}`}
+                          onClick={() => {
+                            if (!isSelected) {
+                              setMainExercises((prev) => [...prev, ex.id]);
+                            }
+                          }}
+                          disabled={isSelected}
+                        >
+                          {isSelected ? "Added" : "Add"}
+                        </Button>
+                      </Card>
+                    );
+                  })}
+                  {filteredDialogExercises.length === 0 && (
+                    <div className="col-span-full text-center text-gray-500 py-10">
+                      <p>No exercises found.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

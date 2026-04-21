@@ -14,7 +14,7 @@ import {
   DialogTrigger,
   DialogOverlay,
 } from "@/components/ui/dialog";
-import { workoutPlans } from "@/data/workouts";
+import { workoutPlans, WorkoutPlan } from "@/data/workouts";
 import { db } from "@/firebase";
 import {
   collection,
@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [lastUsedWorkoutId, setLastUsedWorkoutId] = useState<string | null>(
     null,
   );
+  const [allWorkouts, setAllWorkouts] = useState<WorkoutPlan[]>(workoutPlans);
 
   useEffect(() => {
     if (!user) return;
@@ -87,19 +88,33 @@ export default function Dashboard() {
   // Fetch the last used workout session
   useEffect(() => {
     if (!user) return;
-    const fetchLastWorkout = async () => {
-      const q = query(
+    const fetchUserData = async () => {
+      // Fetch last used
+      const lastSessionQuery = query(
         collection(db, "workout_sessions"),
         where("userId", "==", user.uid),
         orderBy("date", "desc"),
         limit(1),
       );
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        setLastUsedWorkoutId(snap.docs[0].data().workoutId);
+      // Fetch custom workouts
+      const customWorkoutsQuery = query(
+        collection(db, "workouts"),
+        where("userId", "==", user.uid),
+      );
+
+      const [sessionSnap, customSnap] = await Promise.all([
+        getDocs(lastSessionQuery),
+        getDocs(customWorkoutsQuery),
+      ]);
+      if (!sessionSnap.empty) {
+        setLastUsedWorkoutId(sessionSnap.docs[0].data().workoutId);
       }
+      const customWorkouts = customSnap.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() }) as WorkoutPlan,
+      );
+      setAllWorkouts([...workoutPlans, ...customWorkouts]);
     };
-    fetchLastWorkout();
+    fetchUserData();
   }, [user]);
 
   return (
@@ -143,7 +158,7 @@ export default function Dashboard() {
               <DialogTitle>Select a Workout</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-3 mt-2">
-              {workoutPlans.map((plan) => (
+              {allWorkouts.map((plan) => (
                 <Link
                   key={plan.id}
                   to={`/workout/${plan.id}`}
@@ -179,13 +194,11 @@ export default function Dashboard() {
                   </span>
                 </div>
               </div>
-              <Button
-                variant="secondary"
-                className="w-full font-semibold"
-                onClick={() => alert("Create functionality coming soon!")}
-              >
-                + Create New Workout
-              </Button>
+              <Link to="/exercises" className="w-full">
+                <Button variant="secondary" className="w-full font-semibold">
+                  + Create New Workout
+                </Button>
+              </Link>
             </div>
           </DialogContent>
         </Dialog>
