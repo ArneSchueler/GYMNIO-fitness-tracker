@@ -25,6 +25,7 @@ export type WorkoutPhase = "warm-up" | "main" | "cool-down";
 export interface Exercise {
   id: string;
   name: string;
+  description?: string;
   phase: WorkoutPhase;
   sets?: number;
   reps?: string;

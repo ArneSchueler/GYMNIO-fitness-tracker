@@ -14,7 +14,7 @@ import {
   DialogTrigger,
   DialogOverlay,
 } from "@/components/ui/dialog";
-import { workoutPlans, WorkoutPlan } from "@/data/workouts";
+import { workoutPlans, type WorkoutPlan } from "@/data/workouts";
 import { db } from "@/firebase";
 import {
   collection,

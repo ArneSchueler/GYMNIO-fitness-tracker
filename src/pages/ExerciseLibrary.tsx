@@ -31,8 +31,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
-  limit,
   getDocs,
   addDoc,
   deleteDoc,
