@@ -14,14 +14,12 @@ import {
   DialogTrigger,
   DialogOverlay,
 } from "@/components/ui/dialog";
-import { workoutPlans, WorkoutPlan } from "@/data/workouts";
+import { workoutPlans, type WorkoutPlan } from "@/data/workouts";
 import { db } from "@/firebase";
 import {
   collection,
   query,
   where,
-  orderBy,
-  limit,
   onSnapshot,
   getDocs,
 } from "firebase/firestore";
@@ -58,15 +56,19 @@ export default function Dashboard() {
 
     const q = query(
       collection(db, "fitbit_daily_stats"),
-      where("userId", "==", user.uid),
-      orderBy("date", "desc"),
-      limit(1),
+      where("userId", "==", user.uid)
     );
 
     // Echtzeit-Listener
     const unsubscribe = onSnapshot(q, (snap) => {
       if (!snap.empty) {
-        const data = snap.docs[0].data();
+        const docs = snap.docs.map((doc) => doc.data());
+        docs.sort((a, b) => {
+          const timeA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
+          const timeB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
+          return timeB - timeA;
+        });
+        const data = docs[0];
         setStats((prev) => ({
           ...prev,
           calories: { ...prev.calories, current: Number(data.calories) || 0 },
@@ -92,9 +94,7 @@ export default function Dashboard() {
       // Fetch last used
       const lastSessionQuery = query(
         collection(db, "workout_sessions"),
-        where("userId", "==", user.uid),
-        orderBy("date", "desc"),
-        limit(1),
+        where("userId", "==", user.uid)
       );
       // Fetch custom workouts
       const customWorkoutsQuery = query(
@@ -107,7 +107,15 @@ export default function Dashboard() {
         getDocs(customWorkoutsQuery),
       ]);
       if (!sessionSnap.empty) {
-        setLastUsedWorkoutId(sessionSnap.docs[0].data().workoutId);
+        const docs = sessionSnap.docs.map((doc) => doc.data());
+        docs.sort((a, b) => {
+          const timeA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
+          const timeB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
+          return timeB - timeA;
+        });
+        if (docs.length > 0) {
+          setLastUsedWorkoutId(docs[0].workoutId);
+        }
       }
       const customWorkouts = customSnap.docs.map(
         (doc) => ({ id: doc.id, ...doc.data() }) as WorkoutPlan,

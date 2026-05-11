@@ -7,8 +7,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
-  limit,
   getDocs,
   getDoc,
   addDoc,
@@ -167,17 +165,28 @@ export default function WorkoutSession() {
   useEffect(() => {
     if (!user || !workout) return;
     const fetchPreviousWorkout = async () => {
-      const q = query(
-        collection(db, "workout_sessions"),
-        where("userId", "==", user.uid),
-        where("workoutId", "==", workout.id),
-        orderBy("date", "desc"),
-        limit(5),
-      );
-      const snap = await getDocs(q);
-      const prev = snap.docs.find((doc) => doc.data().status === "completed");
-      if (prev) {
-        setPrevSessionData(prev.data().exercises || {});
+      try {
+        const q = query(
+          collection(db, "workout_sessions"),
+          where("userId", "==", user.uid)
+        );
+        const snap = await getDocs(q);
+        const sessions = snap.docs.map((doc) => doc.data());
+        
+        // Filter by workoutId and sort by date descending
+        const workoutSessions = sessions.filter(s => s.workoutId === workout.id);
+        workoutSessions.sort((a, b) => {
+          const timeA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
+          const timeB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
+          return timeB - timeA;
+        });
+
+        const prev = workoutSessions.find((s) => s.status === "completed");
+        if (prev) {
+          setPrevSessionData(prev.exercises || {});
+        }
+      } catch (error) {
+        console.error("Error fetching previous workout:", error);
       }
     };
     fetchPreviousWorkout();

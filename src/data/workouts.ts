@@ -53,7 +53,7 @@ export const workoutPlans: WorkoutPlan[] = [
         id: "a1",
         name: "Cat-Cow",
         phase: "warm-up",
-        duration: 10,
+        duration: 45,
         muscleGroups: ["Rücken", "Wirbelsäule"],
         image: catCow,
       },
