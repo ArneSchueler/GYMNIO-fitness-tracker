@@ -51,7 +51,7 @@ export default function WorkoutSession() {
         } else {
           setWorkout(workoutPlans[0]);
         }
-      } catch (error) {
+      } catch {
         setWorkout(workoutPlans[0]);
       }
     };
@@ -81,7 +81,7 @@ export default function WorkoutSession() {
     };
 
     createInitialSession();
-  }, [user, workout?.id]);
+  }, [user, workout, sessionId]);
 
   /**
    * 2. Sets direkt speichern
@@ -134,7 +134,7 @@ export default function WorkoutSession() {
   useEffect(() => {
     let isMounted = true;
     const acquireWakeLock = async () => {
-      if ("wakeLock" in navigator) {
+      if ("wakeLock" in navigator && document.visibilityState === "visible") {
         try {
           const lock = await navigator.wakeLock.request("screen");
           if (!isMounted) {
@@ -147,9 +147,19 @@ export default function WorkoutSession() {
         }
       }
     };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        acquireWakeLock();
+      }
+    };
+
     acquireWakeLock();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       isMounted = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       wakeLock.current?.release();
     };
   }, []);
@@ -162,13 +172,16 @@ export default function WorkoutSession() {
         where("userId", "==", user.uid),
         where("workoutId", "==", workout.id),
         orderBy("date", "desc"),
-        limit(1),
+        limit(5),
       );
       const snap = await getDocs(q);
-      if (!snap.empty) setPrevSessionData(snap.docs[0].data().exercises || {});
+      const prev = snap.docs.find((doc) => doc.data().status === "completed");
+      if (prev) {
+        setPrevSessionData(prev.data().exercises || {});
+      }
     };
     fetchPreviousWorkout();
-  }, [user, workout?.id]);
+  }, [user, workout]);
 
   if (!workout) {
     return (

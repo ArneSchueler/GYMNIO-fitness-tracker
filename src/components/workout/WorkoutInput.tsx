@@ -34,6 +34,17 @@ export default function WorkoutInput({
     }
   }, [restTime]);
 
+  useEffect(() => {
+    if (prevSets && prevSets.length > 0) {
+      const correspondingSet =
+        prevSets[completedSets.length] || prevSets[prevSets.length - 1];
+      if (correspondingSet) {
+        setRepsInput((prev) => prev || correspondingSet.reps.toString());
+        setWeightInput((prev) => prev || correspondingSet.weight.toString());
+      }
+    }
+  }, [prevSets, completedSets.length]);
+
   const cooldown = restTime > 0;
 
   const handleAddSet = () => {
@@ -106,7 +117,28 @@ export default function WorkoutInput({
         </div>
       )}
       {isMainPhase && (
-        <div className=" ">
+        <div className="flex flex-col gap-2 mt-2">
+          {prevSets && prevSets.length > 0 && (
+            <div
+              className="opacity-70 bg-gray-50 dark:bg-slate-800/50 rounded-md p-3 flex justify-between items-center text-sm border border-dashed border-gray-300 dark:border-slate-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              onClick={() => {
+                const lastSet = prevSets[prevSets.length - 1];
+                setRepsInput(lastSet.reps.toString());
+                setWeightInput(lastSet.weight.toString());
+              }}
+              title="Click to copy previous values"
+            >
+              <span className="font-semibold text-gray-500 uppercase tracking-wider text-xs">
+                Prev
+              </span>
+              <span className="text-gray-600 dark:text-gray-400">
+                {prevSets[prevSets.length - 1].reps} Reps
+              </span>
+              <span className="text-gray-600 dark:text-gray-400">
+                {prevSets[prevSets.length - 1].weight} kg
+              </span>
+            </div>
+          )}
           <TableActions sets={completedSets} prevSets={prevSets} />
         </div>
       )}
