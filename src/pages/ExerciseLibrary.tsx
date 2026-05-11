@@ -31,6 +31,8 @@ import {
   collection,
   query,
   where,
+  orderBy,
+  limit,
   getDocs,
   addDoc,
   deleteDoc,
@@ -140,20 +142,24 @@ export default function ExerciseLibrary() {
       try {
         const q = query(
           collection(db, "workout_sessions"),
-          where("userId", "==", user.uid)
+          where("userId", "==", user.uid),
         );
         const snap = await getDocs(q);
         const allSessions = snap.docs.map((doc) => doc.data());
-        
+
         allSessions.sort((a, b) => {
-          const timeA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
-          const timeB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
+          const timeA = a.date?.toMillis
+            ? a.date.toMillis()
+            : new Date(a.date).getTime();
+          const timeB = b.date?.toMillis
+            ? b.date.toMillis()
+            : new Date(b.date).getTime();
           return timeB - timeA;
         });
 
         const sessions: Record<string, any> = {};
         for (const session of allSessions) {
-          if (!sessions[session.workoutId]) {
+          if (session.workoutId && !sessions[session.workoutId]) {
             sessions[session.workoutId] = session;
           }
         }
@@ -271,7 +277,7 @@ export default function ExerciseLibrary() {
       const exercisesToSave = [
         ...warmupExercises.map((id) => ({
           ...allExercises.find((e) => e.id === id),
-          phase: "warm-up",
+          phase: "warmup",
         })),
         ...mainExercises.map((id) => ({
           ...allExercises.find((e) => e.id === id),
@@ -279,7 +285,7 @@ export default function ExerciseLibrary() {
         })),
         ...cooldownExercises.map((id) => ({
           ...allExercises.find((e) => e.id === id),
-          phase: "cool-down",
+          phase: "cooldown",
         })),
       ];
 
@@ -584,9 +590,9 @@ export default function ExerciseLibrary() {
                 </div>
               </CardHeader>
               <CardContent className="flex-grow pt-0">
-                {ex.notes && (
+                {(ex.description || ex.notes) && (
                   <p className="text-sm text-gray-600 line-clamp-3">
-                    {ex.notes}
+                    {ex.description || ex.notes}
                   </p>
                 )}
               </CardContent>

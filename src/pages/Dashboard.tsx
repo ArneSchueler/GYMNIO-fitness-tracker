@@ -3,7 +3,7 @@ import { ChartBarDefault } from "@/components/charts/ChartBarDefault";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import WidgetCard from "@/components/ui/WidgetCard";
-import { Activity, Flame, Footprints, Timer, RefreshCw } from "lucide-react";
+import { Activity, Flame, Footprints, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -14,18 +14,20 @@ import {
   DialogTrigger,
   DialogOverlay,
 } from "@/components/ui/dialog";
-import { workoutPlans, type WorkoutPlan } from "@/data/workouts";
+import { workoutPlans, WorkoutPlan } from "@/data/workouts";
 import { db } from "@/firebase";
 import {
   collection,
   query,
   where,
+  orderBy,
+  limit,
   onSnapshot,
   getDocs,
 } from "firebase/firestore";
 
 export default function Dashboard() {
-  const { user, accessToken, syncFitbit } = useAuth();
+  const { user } = useAuth();
   // Fallback to "Athlete" if the display name hasn't been set yet
   const userDisplayName = user?.displayName || "Athlete";
   const firstName = userDisplayName.split(" ")[0];
@@ -45,9 +47,7 @@ export default function Dashboard() {
     workoutTime: { current: 0, goal: 60 },
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const isConnected = !!accessToken;
-  
+  const [isConnected, setIsConnected] = useState(false);
   const [lastUsedWorkoutId, setLastUsedWorkoutId] = useState<string | null>(
     null,
   );
@@ -58,19 +58,15 @@ export default function Dashboard() {
 
     const q = query(
       collection(db, "fitbit_daily_stats"),
-      where("userId", "==", user.uid)
+      where("userId", "==", user.uid),
+      orderBy("date", "desc"),
+      limit(1),
     );
 
     // Echtzeit-Listener
     const unsubscribe = onSnapshot(q, (snap) => {
       if (!snap.empty) {
-        const docs = snap.docs.map((doc) => doc.data());
-        docs.sort((a, b) => {
-          const timeA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
-          const timeB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
-          return timeB - timeA;
-        });
-        const data = docs[0];
+        const data = snap.docs[0].data();
         setStats((prev) => ({
           ...prev,
           calories: { ...prev.calories, current: Number(data.calories) || 0 },
@@ -81,6 +77,7 @@ export default function Dashboard() {
             current: Number(data.workoutTime) || 0,
           },
         }));
+        setIsConnected(true);
       }
       setIsLoading(false);
     });
@@ -88,54 +85,57 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [user]);
 
-  const handleRefresh = async () => {
-    if (!isConnected) return;
-    setIsRefreshing(true);
-    await syncFitbit("all");
-    setIsRefreshing(false);
-  };
-
   // Fetch the last used workout session
   useEffect(() => {
     if (!user) return;
     const fetchUserData = async () => {
-      // Fetch last used
-      const lastSessionQuery = query(
-        collection(db, "workout_sessions"),
-        where("userId", "==", user.uid)
-      );
-      // Fetch custom workouts
-      const customWorkoutsQuery = query(
-        collection(db, "workouts"),
-        where("userId", "==", user.uid),
-      );
+      try {
+        // Fetch sessions without orderBy to avoid Firebase composite index requirement
+        const sessionQuery = query(
+          collection(db, "workout_sessions"),
+          where("userId", "==", user.uid),
+        );
+        // Fetch custom workouts
+        const customWorkoutsQuery = query(
+          collection(db, "workouts"),
+          where("userId", "==", user.uid),
+        );
 
-      const [sessionSnap, customSnap] = await Promise.all([
-        getDocs(lastSessionQuery),
-        getDocs(customWorkoutsQuery),
-      ]);
-      if (!sessionSnap.empty) {
-        const docs = sessionSnap.docs.map((doc) => doc.data());
-        docs.sort((a, b) => {
-          const timeA = a.date?.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
-          const timeB = b.date?.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
-          return timeB - timeA;
-        });
-        if (docs.length > 0) {
-          setLastUsedWorkoutId(docs[0].workoutId);
+        const [sessionSnap, customSnap] = await Promise.all([
+          getDocs(sessionQuery),
+          getDocs(customWorkoutsQuery),
+        ]);
+
+        if (!sessionSnap.empty) {
+          const sessions = sessionSnap.docs.map((doc) => doc.data());
+          // Sort client-side to ensure the latest is selected without needing a Firebase index
+          sessions.sort((a, b) => {
+            const timeA = a.date?.toMillis
+              ? a.date.toMillis()
+              : new Date(a.date).getTime();
+            const timeB = b.date?.toMillis
+              ? b.date.toMillis()
+              : new Date(b.date).getTime();
+            return timeB - timeA;
+          });
+          if (sessions.length > 0) {
+            setLastUsedWorkoutId(sessions[0].workoutId);
+          }
         }
+        const customWorkouts = customSnap.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() }) as WorkoutPlan,
+        );
+        setAllWorkouts([...workoutPlans, ...customWorkouts]);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
       }
-      const customWorkouts = customSnap.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() }) as WorkoutPlan,
-      );
-      setAllWorkouts([...workoutPlans, ...customWorkouts]);
     };
     fetchUserData();
   }, [user]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-6 h-full gap-6 flex flex-col min-h-0 text-2xl font-bold">
-      <header className="flex justify-between items-center ">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
         <div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl text-sky-900">
             Welcome, {firstName}!
@@ -144,41 +144,31 @@ export default function Dashboard() {
             <p className="text-lg text-gray-500">
               {currentDay}, {formattedDate}
             </p>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
-                {isLoading && !isConnected ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>{" "}
-                    Checking Connection...
-                  </>
-                ) : isConnected ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>{" "}
-                    Fitbit Connected
-                  </>
-                ) : (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>{" "}
-                    Not Connected
-                  </>
-                )}
-              </div>
-              {isConnected && (
-                <button
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  className="p-1.5 rounded-full hover:bg-slate-200 text-slate-500 transition-colors disabled:opacity-50"
-                  title="Refresh Fitbit Data"
-                >
-                  <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-                </button>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
+              {isLoading && !isConnected ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>{" "}
+                  Checking Connection...
+                </>
+              ) : isConnected ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>{" "}
+                  Fitbit Connected
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-slate-400"></span>{" "}
+                  Not Connected
+                </>
               )}
             </div>
           </div>
         </div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button size={"lg"}>Start Workout</Button>
+            <Button size={"lg"} className="w-full sm:w-auto shadow-md">
+              Start Workout
+            </Button>
           </DialogTrigger>
           <DialogOverlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
           <DialogContent className="fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white dark:bg-slate-950 p-6 shadow-lg sm:max-w-[425px] sm:rounded-xl border border-gray-200 dark:border-slate-800">
@@ -190,12 +180,9 @@ export default function Dashboard() {
                 <Link
                   key={plan.id}
                   to={`/workout/${plan.id}`}
-                  className="w-full"
+                  className="w-full block"
                 >
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between h-auto py-3 px-4 flex items-center gap-2"
-                  >
+                  <div className="border border-border bg-background hover:bg-muted text-foreground w-full justify-between py-3 px-4 flex items-center gap-2 rounded-lg transition-colors cursor-pointer shadow-sm">
                     <div className="flex flex-col items-start gap-1">
                       <span className="font-semibold text-base whitespace-normal text-left leading-tight text-sky-900 dark:text-sky-100">
                         {plan.title}
@@ -209,7 +196,7 @@ export default function Dashboard() {
                         Last Used
                       </span>
                     )}
-                  </Button>
+                  </div>
                 </Link>
               ))}
               <div className="relative my-2">
@@ -239,8 +226,7 @@ export default function Dashboard() {
             goal={stats.calories.goal}
             type="progress"
             label="kcal today"
-            isLoading={isLoading || isRefreshing}
-            isDisconnected={!isConnected}
+            isLoading={isLoading}
           ></WidgetCard>
           <WidgetCard
             icon={<Footprints size={widgetIconSize} />}
@@ -248,16 +234,14 @@ export default function Dashboard() {
             goal={stats.steps.goal}
             label="steps"
             type="progress"
-            isLoading={isLoading || isRefreshing}
-            isDisconnected={!isConnected}
+            isLoading={isLoading}
           ></WidgetCard>
           <WidgetCard
             icon={<Activity size={widgetIconSize} />}
             data={stats.heartRate.current}
             type="heartrate"
             label="bmp"
-            isLoading={isLoading || isRefreshing}
-            isDisconnected={!isConnected}
+            isLoading={isLoading}
           ></WidgetCard>
           <WidgetCard
             icon={<Timer size={widgetIconSize} />}
@@ -265,8 +249,7 @@ export default function Dashboard() {
             goal={stats.workoutTime.goal}
             label="workout minutes"
             type="workout"
-            isLoading={isLoading || isRefreshing}
-            isDisconnected={!isConnected}
+            isLoading={isLoading}
           ></WidgetCard>
         </section>
         <section className="col-span-12 grid lg:grid-cols-12 gap-4 min-h-0">
