@@ -3,7 +3,7 @@ import { ChartBarDefault } from "@/components/charts/ChartBarDefault";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import WidgetCard from "@/components/ui/WidgetCard";
-import { Activity, Flame, Footprints, Timer } from "lucide-react";
+import { Activity, Flame, Footprints, Timer, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, accessToken, syncFitbit } = useAuth();
   // Fallback to "Athlete" if the display name hasn't been set yet
   const userDisplayName = user?.displayName || "Athlete";
   const firstName = userDisplayName.split(" ")[0];
@@ -45,7 +45,9 @@ export default function Dashboard() {
     workoutTime: { current: 0, goal: 60 },
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isConnected = !!accessToken;
+  
   const [lastUsedWorkoutId, setLastUsedWorkoutId] = useState<string | null>(
     null,
   );
@@ -79,13 +81,19 @@ export default function Dashboard() {
             current: Number(data.workoutTime) || 0,
           },
         }));
-        setIsConnected(true);
       }
       setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [user]);
+
+  const handleRefresh = async () => {
+    if (!isConnected) return;
+    setIsRefreshing(true);
+    await syncFitbit("all");
+    setIsRefreshing(false);
+  };
 
   // Fetch the last used workout session
   useEffect(() => {
@@ -136,22 +144,34 @@ export default function Dashboard() {
             <p className="text-lg text-gray-500">
               {currentDay}, {formattedDate}
             </p>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
-              {isLoading && !isConnected ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>{" "}
-                  Checking Connection...
-                </>
-              ) : isConnected ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-green-500"></span>{" "}
-                  Fitbit Connected
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-slate-400"></span>{" "}
-                  Not Connected
-                </>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
+                {isLoading && !isConnected ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>{" "}
+                    Checking Connection...
+                  </>
+                ) : isConnected ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>{" "}
+                    Fitbit Connected
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>{" "}
+                    Not Connected
+                  </>
+                )}
+              </div>
+              {isConnected && (
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="p-1.5 rounded-full hover:bg-slate-200 text-slate-500 transition-colors disabled:opacity-50"
+                  title="Refresh Fitbit Data"
+                >
+                  <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+                </button>
               )}
             </div>
           </div>
@@ -219,7 +239,8 @@ export default function Dashboard() {
             goal={stats.calories.goal}
             type="progress"
             label="kcal today"
-            isLoading={isLoading}
+            isLoading={isLoading || isRefreshing}
+            isDisconnected={!isConnected}
           ></WidgetCard>
           <WidgetCard
             icon={<Footprints size={widgetIconSize} />}
@@ -227,14 +248,16 @@ export default function Dashboard() {
             goal={stats.steps.goal}
             label="steps"
             type="progress"
-            isLoading={isLoading}
+            isLoading={isLoading || isRefreshing}
+            isDisconnected={!isConnected}
           ></WidgetCard>
           <WidgetCard
             icon={<Activity size={widgetIconSize} />}
             data={stats.heartRate.current}
             type="heartrate"
             label="bmp"
-            isLoading={isLoading}
+            isLoading={isLoading || isRefreshing}
+            isDisconnected={!isConnected}
           ></WidgetCard>
           <WidgetCard
             icon={<Timer size={widgetIconSize} />}
@@ -242,7 +265,8 @@ export default function Dashboard() {
             goal={stats.workoutTime.goal}
             label="workout minutes"
             type="workout"
-            isLoading={isLoading}
+            isLoading={isLoading || isRefreshing}
+            isDisconnected={!isConnected}
           ></WidgetCard>
         </section>
         <section className="col-span-12 grid lg:grid-cols-12 gap-4 min-h-0">

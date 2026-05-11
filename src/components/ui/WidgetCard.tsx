@@ -12,6 +12,7 @@ interface WidgetCardProps {
   // Wir erweitern die Typen um "workout"
   type: "progress" | "heartrate" | "workout";
   isLoading?: boolean;
+  isDisconnected?: boolean;
 }
 
 export default function WidgetCard({
@@ -21,6 +22,7 @@ export default function WidgetCard({
   label,
   type,
   isLoading,
+  isDisconnected,
 }: WidgetCardProps) {
   let percentage = 0;
 
@@ -34,15 +36,28 @@ export default function WidgetCard({
   }
 
   // Holt die dynamische Farbe aus deiner utils.ts
-  const statusColor = getStatusColor(percentage, type);
-  // Icon Farbe passend zum Ring
-  const iconColor = statusColor.replace("stroke-", "text-");
+  let statusColor = getStatusColor(percentage, type);
+  let iconColor = statusColor.replace("stroke-", "text-");
+
+  if (isDisconnected) {
+    percentage = 0;
+    statusColor = "stroke-slate-200";
+    iconColor = "text-slate-300";
+  }
 
   return (
-    <Card className="relative col-span-3 items-center gap-2 p-4 flex flex-col justify-center rounded-2xl bg-[#FBFDFE] shadow-sm border-none">
+    <Card className={cn(
+      "relative col-span-3 items-center gap-2 p-4 flex flex-col justify-center rounded-2xl bg-[#FBFDFE] shadow-sm border-none transition-opacity",
+      isDisconnected && "opacity-75 grayscale"
+    )}>
       {/* Loading / Current Indicator */}
       <div className="absolute top-4 right-4 flex items-center">
-        {isLoading ? (
+        {isDisconnected ? (
+          <span
+            className="h-2.5 w-2.5 rounded-full bg-slate-300"
+            title="Not Connected"
+          ></span>
+        ) : isLoading ? (
           <span className="relative flex h-2.5 w-2.5" title="Syncing...">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
@@ -69,29 +84,35 @@ export default function WidgetCard({
       />
 
       <div className="flex flex-col justify-center items-center text-center">
-        <div className="flex items-baseline gap-1">
-          {/* Hauptzahl */}
-          <span className="text-2xl font-bold text-sky-950">
-            {data.toLocaleString()}
+        {isDisconnected ? (
+          <span className="text-sm font-bold text-slate-400 mt-2">
+            No Connection
           </span>
-
-          {/* Einheit nur bei Workout anzeigen */}
-          {type === "workout" && (
-            <span className="text-xs font-bold text-slate-400">MIN</span>
-          )}
-
-          {/* Zielanzeige (Goal) */}
-          {goal && (
-            <span className="text-sm text-gray-400 font-medium">
-              / {goal.toLocaleString()}
+        ) : (
+          <div className="flex items-baseline gap-1">
+            {/* Hauptzahl */}
+            <span className="text-2xl font-bold text-sky-950">
+              {data.toLocaleString()}
             </span>
-          )}
 
-          {/* Einheit BPM nur bei Heartrate anzeigen */}
-          {type === "heartrate" && (
-            <span className="text-xs font-bold text-slate-400">BPM</span>
-          )}
-        </div>
+            {/* Einheit nur bei Workout anzeigen */}
+            {type === "workout" && (
+              <span className="text-xs font-bold text-slate-400">MIN</span>
+            )}
+
+            {/* Zielanzeige (Goal) */}
+            {goal && (
+              <span className="text-sm text-gray-400 font-medium">
+                / {goal.toLocaleString()}
+              </span>
+            )}
+
+            {/* Einheit BPM nur bei Heartrate anzeigen */}
+            {type === "heartrate" && (
+              <span className="text-xs font-bold text-slate-400">BPM</span>
+            )}
+          </div>
+        )}
 
         {/* Label (unten) */}
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">
